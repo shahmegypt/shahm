@@ -243,7 +243,7 @@ export const App: React.FC = () => {
     } catch (error: unknown) {
       setProfile(null);
       setProfileError(error instanceof Error ? error.message : 'تعذر تحميل بيانات المستخدم');
-    } fontally {
+    } finally {
       setProfileLoading(false);
       setSessionLoading(false);
     }
