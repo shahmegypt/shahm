@@ -78,8 +78,6 @@
 - `supabase/functions/purge-verification-docs/` — حذف مستندات التوثيق بعد 30 يوماً.
 - `supabase/tests/database/01_security_and_rls.test.sql`
 - `scripts/test-race-condition.ts`
-- `public/icon-192.png`, `public/icon-512.png` — أيقونات PWA (ملفات ثنائية، غير
-  قابلة للتضمين في مستند نصي أصلاً).
 
 أرسل لي محتوى هذه الملفات (كنص أو كرفع منفصل) وسأراجعها بنفس الدقة وأدمجها في
 هذا المستودع.

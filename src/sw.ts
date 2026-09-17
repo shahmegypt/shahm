@@ -39,8 +39,6 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title || 'شَهْم', {
       body: data.body || 'إشعار جديد من منصة شَهْم',
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
       dir: 'rtl',
       lang: 'ar',
       data: { url: data.url || '/' },

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase, UserRole, PublicTrip, ContactCardData, RequesterRelation } from './lib/supabase';
+import { supabase, supabaseUrl, UserRole, PublicTrip, ContactCardData, RequesterRelation } from './lib/supabase';
 import { LocationPicker } from './components/common/LocationPicker';
 import { ReportModal } from './components/common/ReportModal';
 import { RaceConditionToast } from './components/common/StateViews';
@@ -12,7 +12,6 @@ import {
   Phone,
   MessageSquare,
   Map,
-  Heart,
   CheckCircle2,
   AlertCircle,
   Loader2,
@@ -174,6 +173,23 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    setErrorMessage(null);
+    setAuthLoading(true);
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: 'https://shahm.pages.dev',
+      },
+    });
+
+    if (error) {
+      setAuthLoading(false);
+      setErrorMessage(`تعذر تسجيل الدخول عبر Google: ${error.message}`);
+    }
+  };
+
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
@@ -224,7 +240,7 @@ export const App: React.FC = () => {
 
     try {
       const session = (await supabase.auth.getSession()).data.session;
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-trip-proxy`, {
+      const response = await fetch(`${supabaseUrl}/functions/v1/create-trip-proxy`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -324,9 +340,6 @@ export const App: React.FC = () => {
     return (
       <div className="min-h-screen bg-[#F7F8F9] flex flex-col justify-center items-center p-4">
         <div className="w-full max-w-sm bg-white p-6 rounded-2xl shadow-sm border border-[#8A949E]/20 text-center">
-          <div className="w-20 h-20 mx-auto mb-4 bg-[#E6F4ED] rounded-full flex items-center justify-center">
-            <Heart className="w-10 h-10 text-[#146B44]" />
-          </div>
           <h1 className="text-2xl font-bold text-[#1F2430] mb-1">شَهْم</h1>
           <p className="text-xs text-[#6B7280] mb-6 italic">﴿وَمَنْ أَحْيَاهَا فَكَأَنَّمَا أَحْيَا النَّاسَ جَمِيعًا﴾</p>
 
@@ -420,6 +433,16 @@ export const App: React.FC = () => {
                 className="w-full h-[52px] bg-[#146B44] active:bg-[#0F5636] text-white font-semibold rounded-xl text-base transition-colors flex items-center justify-center gap-2"
               >
                 {authLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'إرسال كود التحقق مجاناً'}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                disabled={authLoading}
+                className="w-full h-[52px] bg-white border border-[#8A949E] text-[#1F2430] font-semibold rounded-xl text-base hover:bg-[#F7F8F9] transition-colors flex items-center justify-center gap-2"
+              >
+                {authLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <span className="font-bold text-[#4285F4]">G</span>}
+                الدخول باستخدام Google
               </button>
             </form>
           ) : (
