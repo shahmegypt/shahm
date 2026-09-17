@@ -96,8 +96,30 @@ export const App: React.FC = () => {
     try {
       const { data, error } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle();
       if (error) throw error;
-      setProfile(data);
-      if (!data) setProfileError('لم يتم العثور على بيانات الدور في جدول profiles.');
+      if (!data) {
+        const pendingProfile = JSON.parse(localStorage.getItem('shahm.pendingProfile') || 'null');
+        if (pendingProfile?.firstName && pendingProfile?.phone && pendingProfile?.role) {
+          const { data: createdProfile, error: createError } = await supabase
+            .from('profiles')
+            .insert({
+              id: uid,
+              first_name: pendingProfile.firstName,
+              phone_number: pendingProfile.phone,
+              role: pendingProfile.role,
+              verification_status: 'unverified',
+            })
+            .select()
+            .single();
+          if (createError) throw createError;
+          setProfile(createdProfile);
+          localStorage.removeItem('shahm.pendingProfile');
+        } else {
+          setProfile(null);
+          setProfileError('بيانات الحساب غير مكتملة. سجّل الخروج وأعد الدخول بعد اختيار الدور.');
+        }
+      } else {
+        setProfile(data);
+      }
     } catch (error: unknown) {
       setProfile(null);
       setProfileError(error instanceof Error ? error.message : 'تعذر تحميل بيانات المستخدم');
@@ -176,6 +198,15 @@ export const App: React.FC = () => {
 
   const handleGoogleLogin = async () => {
     setErrorMessage(null);
+    if (!firstName.trim() || !/^01\d{9}$/.test(phone.trim())) {
+      setErrorMessage('أدخل الاسم ورقم هاتف مصري صحيح يبدأ بـ 01.');
+      return;
+    }
+    localStorage.setItem('shahm.pendingProfile', JSON.stringify({
+      firstName: firstName.trim(),
+      phone: phone.trim(),
+      role: roleSelection,
+    }));
     setAuthLoading(true);
 
     const { error } = await supabase.auth.signInWithOAuth({
@@ -349,14 +380,14 @@ export const App: React.FC = () => {
       <div className="min-h-screen bg-[#F7F8F9] flex flex-col justify-center items-center p-4">
         <div className="w-full max-w-sm bg-white p-6 rounded-2xl shadow-sm border border-[#8A949E]/20">
           <button
-            onClick={() => { setRoleSelection(null); setAuthStep('details'); }}
+            onClick={() => setRoleSelection(null)}
             className="text-xs text-[#6B7280] mb-4 hover:text-[#1F2430]"
           >
             ← العودة لاختيار الدور
           </button>
 
           <h2 className="text-xl font-bold text-[#1F2430] mb-2">
-            {authStep === 'details' ? 'تسجيل البيانات' : 'تأكيد الحساب مجاناً'}
+            تسجيل البيانات
           </h2>
           <p className="text-xs text-[#6B7280] mb-6">الاسم ورقم الجوال للتواصل عند القبول</p>
 
