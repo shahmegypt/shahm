@@ -37,13 +37,13 @@ export const App: React.FC = () => {
   const [adminTab, setAdminTab] = useState<'trips' | 'safety' | 'analytics' | 'usage'>('trips');
 
   // Auth States
-  const [authStep, setAuthStep] = useState<'details' | 'otp'>('details');
   const [firstName, setFirstName] = useState('');
   const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
-  const [otpCode, setOtpCode] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [sessionLoading, setSessionLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   // Requester States
   const [origin, setOrigin] = useState<{ areaLabel: string; fullAddress: string; lat: number; lng: number } | null>(null);
@@ -66,9 +66,14 @@ export const App: React.FC = () => {
   const { canInstall, install } = useInstallPrompt();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) setProfileError(`تعذر استعادة جلسة الدخول: ${error.message}`);
       setSessionUser(session?.user ?? null);
       if (session?.user) fetchProfile(session.user.id);
+      else setSessionLoading(false);
+    }).catch((error: unknown) => {
+      setProfileError(error instanceof Error ? error.message : 'تعذر استعادة جلسة الدخول');
+      setSessionLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -77,15 +82,29 @@ export const App: React.FC = () => {
         fetchProfile(session.user.id);
       } else {
         setProfile(null);
+        setProfileError(null);
       }
+      setSessionLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
   const fetchProfile = async (uid: string) => {
-    const { data } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle();
-    if (data) setProfile(data);
+    setProfileLoading(true);
+    setProfileError(null);
+    try {
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle();
+      if (error) throw error;
+      setProfile(data);
+      if (!data) setProfileError('لم يتم العثور على بيانات الدور في جدول profiles.');
+    } catch (error: unknown) {
+      setProfile(null);
+      setProfileError(error instanceof Error ? error.message : 'تعذر تحميل بيانات المستخدم');
+    } finally {
+      setProfileLoading(false);
+      setSessionLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -104,7 +123,7 @@ export const App: React.FC = () => {
       return;
     }
 
-    if (profile.role === 'volunteer' || profile.role.includes('admin')) {
+    if (profile.role === 'volunteer' || (typeof profile.role === 'string' && profile.role.includes('admin'))) {
       supabase
         .from('trips')
         .select(TRIP_PUBLIC_COLUMNS)
@@ -155,24 +174,6 @@ export const App: React.FC = () => {
     }
   }, [profile]);
 
-  const handleSendOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMessage(null);
-    setAuthLoading(true);
-
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: { shouldCreateUser: true },
-    });
-
-    setAuthLoading(false);
-    if (error) {
-      setErrorMessage(error.message);
-    } else {
-      setAuthStep('otp');
-    }
-  };
-
   const handleGoogleLogin = async () => {
     setErrorMessage(null);
     setAuthLoading(true);
@@ -188,49 +189,6 @@ export const App: React.FC = () => {
       setAuthLoading(false);
       setErrorMessage(`تعذر تسجيل الدخول عبر Google: ${error.message}`);
     }
-  };
-
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMessage(null);
-    setAuthLoading(true);
-
-    const { data, error } = await supabase.auth.verifyOtp({
-      email: email.trim(),
-      token: otpCode.trim(),
-      type: 'email',
-    });
-
-    if (error || !data.user) {
-      setAuthLoading(false);
-      setErrorMessage('كود التحقق غير صحيح أو انتهت صلاحيته');
-      return;
-    }
-
-    const { data: existingProfile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', data.user.id)
-      .maybeSingle();
-
-    if (!existingProfile) {
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: data.user.id,
-        first_name: firstName.trim(),
-        phone_number: phone.trim(),
-        role: roleSelection!,
-        verification_status: 'unverified',
-      });
-
-      if (profileError) {
-        setAuthLoading(false);
-        setErrorMessage(profileError.message);
-        return;
-      }
-    }
-
-    setAuthLoading(false);
-    fetchProfile(data.user.id);
   };
 
   const handleCreateTrip = async () => {
@@ -319,6 +277,30 @@ export const App: React.FC = () => {
     }
   };
 
+  if (sessionLoading || (sessionUser && profileLoading)) {
+    return (
+      <div className="min-h-screen bg-[#F7F8F9] flex items-center justify-center p-4 text-[#6B7280]">
+        <div className="flex items-center gap-2 text-sm" role="status">
+          <Loader2 className="w-5 h-5 animate-spin text-[#146B44]" />
+          جاري تحميل الحساب...
+        </div>
+      </div>
+    );
+  }
+
+  if (sessionUser && profileError) {
+    return (
+      <div className="min-h-screen bg-[#F7F8F9] flex items-center justify-center p-4 text-center">
+        <div className="w-full max-w-sm bg-white p-6 rounded-2xl border border-[#FCEAEA] space-y-3">
+          <AlertCircle className="w-8 h-8 mx-auto text-[#B53A3A]" />
+          <h2 className="font-bold text-[#1F2430]">تعذر تحميل دور الحساب</h2>
+          <p className="text-xs text-[#6B7280]">{profileError}</p>
+          <button onClick={() => supabase.auth.signOut()} className="text-xs text-[#146B44] font-bold">تسجيل الخروج</button>
+        </div>
+      </div>
+    );
+  }
+
   if (profile && !profile.is_active) {
     return (
       <div className="min-h-screen bg-[#F7F8F9] flex flex-col justify-center items-center p-4 text-center">
@@ -376,11 +358,7 @@ export const App: React.FC = () => {
           <h2 className="text-xl font-bold text-[#1F2430] mb-2">
             {authStep === 'details' ? 'تسجيل البيانات' : 'تأكيد الحساب مجاناً'}
           </h2>
-          <p className="text-xs text-[#6B7280] mb-6">
-            {authStep === 'details'
-              ? 'الاسم ورقم الجوال للتواصل عند القبول، والبريد للتحقق المجاني'
-              : `ابعتنالك كود على ${email}`}
-          </p>
+          <p className="text-xs text-[#6B7280] mb-6">الاسم ورقم الجوال للتواصل عند القبول</p>
 
           {errorMessage && (
             <div className="p-3 mb-4 bg-[#FCEAEA] text-[#B53A3A] text-xs rounded-xl flex items-center gap-2">
@@ -389,8 +367,7 @@ export const App: React.FC = () => {
             </div>
           )}
 
-          {authStep === 'details' ? (
-            <form onSubmit={handleSendOtp} className="space-y-4">
+          <form onSubmit={(event) => { event.preventDefault(); handleGoogleLogin(); }} className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-[#1F2430] mb-1">اسمك الأول</label>
                 <input
@@ -410,30 +387,10 @@ export const App: React.FC = () => {
                   required
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="05XXXXXXXX"
+                  placeholder="01XXXXXXXXX"
                   className="w-full h-[52px] px-4 bg-white border border-[#8A949E] rounded-xl text-base text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
                 />
               </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-[#1F2430] mb-1">البريد الإلكتروني (للتحقق)</label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  className="w-full h-[52px] px-4 bg-white border border-[#8A949E] rounded-xl text-base text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={authLoading}
-                className="w-full h-[52px] bg-[#146B44] active:bg-[#0F5636] text-white font-semibold rounded-xl text-base transition-colors flex items-center justify-center gap-2"
-              >
-                {authLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'إرسال كود التحقق مجاناً'}
-              </button>
 
               <button
                 type="button"
@@ -445,29 +402,6 @@ export const App: React.FC = () => {
                 الدخول باستخدام Google
               </button>
             </form>
-          ) : (
-            <form onSubmit={handleVerifyOtp} className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-[#1F2430] mb-1">أدخل رمز التحقق</label>
-                <input
-                  type="text"
-                  required
-                  value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value)}
-                  placeholder="123456"
-                  className="w-full h-[52px] px-4 text-center tracking-widest text-lg font-bold bg-white border border-[#8A949E] rounded-xl focus:border-[#2F6FED] focus:outline-none"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={authLoading}
-                className="w-full h-[52px] bg-[#146B44] active:bg-[#0F5636] text-white font-semibold rounded-xl text-base transition-colors flex items-center justify-center gap-2"
-              >
-                {authLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'تأكيد ودخول'}
-              </button>
-            </form>
-          )}
         </div>
       </div>
     );
@@ -478,6 +412,19 @@ export const App: React.FC = () => {
   // للمشرفين دائماً واجهة المتطوع (للعمل الميداني)، والمستخدم العادي يرى واجهته حسب دوره فقط.
   const showRequesterView = profile?.role === 'requester';
   const showVolunteerView = profile?.role === 'volunteer' || (isAdmin && adminTab === 'trips');
+
+  if (sessionUser && !['requester', 'volunteer', 'ops_admin', 'super_admin', 'analytics_viewer'].includes(profile?.role)) {
+    return (
+      <div className="min-h-screen bg-[#F7F8F9] flex items-center justify-center p-4 text-center">
+        <div className="w-full max-w-sm bg-white p-6 rounded-2xl border border-[#8A949E]/20 space-y-3">
+          <AlertCircle className="w-8 h-8 mx-auto text-[#B53A3A]" />
+          <h2 className="font-bold text-[#1F2430]">الدور غير مكتمل</h2>
+          <p className="text-xs text-[#6B7280]">حسابك لا يحتوي على دور صالح في جدول profiles.</p>
+          <button onClick={() => supabase.auth.signOut()} className="text-xs text-[#146B44] font-bold">تسجيل الخروج</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F7F8F9] flex flex-col text-right">
