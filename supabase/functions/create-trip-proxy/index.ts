@@ -1,5 +1,3 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
-
 type RequesterRelation = 'patient' | 'guardian' | 'companion';
 
 type CreateTripPayload = {
@@ -14,17 +12,10 @@ type CreateTripPayload = {
   requester_relation: RequesterRelation;
 };
 
-const supabaseUrl = Deno.env.get('SUPABASE_URL');
-const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
-const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 const allowedOrigins = (Deno.env.get('ALLOWED_ORIGINS') ?? '')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
-
-if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey || allowedOrigins.length === 0) {
-  throw new Error('Supabase function environment is incomplete');
-}
 
 const jsonHeaders = (request: Request) => {
   const requestOrigin = request.headers.get('origin') ?? '';
@@ -82,6 +73,15 @@ Deno.serve(async (request) => {
   if (request.method !== 'POST') {
     return response(request, 405, { error: 'Method not allowed' });
   }
+
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+  const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey) {
+    return response(request, 500, { error: 'Supabase function environment is incomplete' });
+  }
+
+  const { createClient } = await import('npm:@supabase/supabase-js@2.45.4');
 
   const authorization = request.headers.get('authorization');
   if (!authorization?.startsWith('Bearer ')) {
