@@ -110,26 +110,29 @@ export const App: React.FC = () => {
   ) : null;
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    supabase.removeAllChannels();
-    localStorage.removeItem('shahm.pendingProfile');
-    setSessionUser(null);
-    setProfile(null);
-    setRoleSelection(null);
-    setFirstName('');
-    setPhone('');
-    setAuthLoading(false);
-    setErrorMessage(null);
-    setProfileError(null);
-    setPendingTrips([]);
-    setActiveRequesterTrip(null);
-    setActiveVolunteerTripData(null);
-    setSelectedTripDetails(null);
-    setAcceptingTripId(null);
-    setRaceConditionDetected(false);
-    setReportModalOpen(false);
-    setReportSuccess(false);
-    setAdminTab('trips');
+    try {
+      await supabase.auth.signOut();
+    } finally {
+      supabase.removeAllChannels();
+      localStorage.removeItem('shahm.pendingProfile');
+      setSessionUser(null);
+      setProfile(null);
+      setRoleSelection(null);
+      setFirstName('');
+      setPhone('');
+      setAuthLoading(false);
+      setErrorMessage(null);
+      setProfileError(null);
+      setPendingTrips([]);
+      setActiveRequesterTrip(null);
+      setActiveVolunteerTripData(null);
+      setSelectedTripDetails(null);
+      setAcceptingTripId(null);
+      setRaceConditionDetected(false);
+      setReportModalOpen(false);
+      setReportSuccess(false);
+      setAdminTab('trips');
+    }
   };
 
   useEffect(() => {

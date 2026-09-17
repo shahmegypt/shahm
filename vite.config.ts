@@ -11,7 +11,7 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.ts',
       registerType: 'autoUpdate',
-      includeAssets: ['manifest.json', 'offline.html'],
+      includeAssets: ['offline.html'],
       manifest: {
         name: 'شَهْم - نقل الحالات العلاجية',
         short_name: 'شَهْم',
