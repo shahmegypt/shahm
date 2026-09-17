@@ -11,24 +11,42 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.ts',
       registerType: 'autoUpdate',
-      includeAssets: ['offline.html'],
+      includeAssets: ['offline.html', 'favicon.ico', 'apple-touch-icon.png'],
       manifest: {
         name: 'شَهْم - نقل الحالات العلاجية',
         short_name: 'شَهْم',
         description: 'منصة تكافلية غير ربحية لنقل الحالات العلاجية',
         start_url: '/',
+        scope: '/',
         display: 'standalone',
+        orientation: 'portrait',
         background_color: '#F7F8F9',
         theme_color: '#146B44',
         lang: 'ar',
         dir: 'rtl',
         icons: [
-          { src: '/icon-192.jpeg', sizes: '192x192', type: 'image/jpeg' },
-          { src: '/icon-512.jpeg', sizes: '512x512', type: 'image/jpeg', purpose: 'maskable' },
+          {
+            src: 'pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
+          }
         ],
       },
       injectManifest: {
-        globPatterns: ['**/*.{js,css,html,ico,jpg,jpeg,svg}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,svg}'],
       },
     }),
   ],
