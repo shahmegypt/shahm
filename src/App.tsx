@@ -26,6 +26,33 @@ import {
   Server
 } from 'lucide-react';
 
+type InstallNoticeProps = {
+  canInstall: boolean;
+  showManualInstructions: boolean;
+  onInstall: () => Promise<void>;
+  onDismiss: () => void;
+  message: string | null;
+};
+
+const InstallNotice: React.FC<InstallNoticeProps> = ({ canInstall, showManualInstructions, onInstall, onDismiss, message }) => (
+  <div className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-md rounded-2xl border border-[#146B44]/20 bg-white p-4 text-right shadow-xl" role="dialog" aria-label="تثبيت تطبيق شَهْم">
+    <button onClick={onDismiss} aria-label="إغلاق" className="float-left text-lg text-[#6B7280]">×</button>
+    <h2 className="font-bold text-[#1F2430]">نزّل تطبيق شَهْم</h2>
+    {showManualInstructions ? (
+      <ol className="mt-2 list-decimal pr-5 text-xs leading-6 text-[#6B7280]">
+        <li>اضغط مشاركة من المتصفح.</li>
+        <li>اختار «إضافة إلى الشاشة الرئيسية».</li>
+        <li>افتح شَهْم من الأيقونة بعد التثبيت.</li>
+      </ol>
+    ) : (
+      <p className="mt-1 text-xs leading-5 text-[#6B7280]">استخدم شَهْم كتطبيق على موبايلك عشان الوصول للخدمة يبقى أسهل وأسرع.</p>
+    )}
+    {message && <p className="mt-2 text-xs font-semibold text-[#146B44]">{message}</p>}
+    {!message && canInstall && <button onClick={onInstall} className="mt-3 h-10 rounded-xl bg-[#146B44] px-4 text-xs font-bold text-white">نزّل التطبيق</button>}
+    {!message && !canInstall && !showManualInstructions && <p className="mt-2 text-xs text-[#6B7280]">استخدم قائمة المتصفح ثم اختر إضافة إلى الشاشة الرئيسية.</p>}
+  </div>
+);
+
 const TRIP_PUBLIC_COLUMNS = 'id, requester_id, volunteer_id, origin_area_label, destination_area_label, status, requester_relation, created_at, accepted_at, completed_at';
 
 export const App: React.FC = () => {
@@ -63,7 +90,47 @@ export const App: React.FC = () => {
   // Report Modal
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [reportSuccess, setReportSuccess] = useState(false);
-  const { canInstall, install } = useInstallPrompt();
+  const [installDismissed, setInstallDismissed] = useState(false);
+  const [installMessage, setInstallMessage] = useState<string | null>(null);
+  const { canInstall, showManualInstructions, showInstallPrompt, install } = useInstallPrompt();
+
+  const handleInstall = async () => {
+    const installed = await install();
+    setInstallMessage(installed ? 'تم تجهيز التطبيق للاستخدام.' : 'لم يتم التثبيت. يمكنك المحاولة مرة أخرى من قائمة المتصفح.');
+  };
+
+  const installNotice = showInstallPrompt && !installDismissed ? (
+    <InstallNotice
+      canInstall={canInstall}
+      showManualInstructions={showManualInstructions}
+      onInstall={handleInstall}
+      onDismiss={() => setInstallDismissed(true)}
+      message={installMessage}
+    />
+  ) : null;
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    supabase.removeAllChannels();
+    localStorage.removeItem('shahm.pendingProfile');
+    setSessionUser(null);
+    setProfile(null);
+    setRoleSelection(null);
+    setFirstName('');
+    setPhone('');
+    setAuthLoading(false);
+    setErrorMessage(null);
+    setProfileError(null);
+    setPendingTrips([]);
+    setActiveRequesterTrip(null);
+    setActiveVolunteerTripData(null);
+    setSelectedTripDetails(null);
+    setAcceptingTripId(null);
+    setRaceConditionDetected(false);
+    setReportModalOpen(false);
+    setReportSuccess(false);
+    setAdminTab('trips');
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session }, error }) => {
@@ -212,7 +279,8 @@ export const App: React.FC = () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: 'https://shahm.pages.dev',
+        redirectTo: window.location.origin,
+        queryParams: { prompt: 'select_account' },
       },
     });
 
@@ -326,7 +394,7 @@ export const App: React.FC = () => {
           <AlertCircle className="w-8 h-8 mx-auto text-[#B53A3A]" />
           <h2 className="font-bold text-[#1F2430]">تعذر تحميل دور الحساب</h2>
           <p className="text-xs text-[#6B7280]">{profileError}</p>
-          <button onClick={() => supabase.auth.signOut()} className="text-xs text-[#146B44] font-bold">تسجيل الخروج</button>
+          <button onClick={handleSignOut} className="text-xs text-[#146B44] font-bold">تسجيل الخروج</button>
         </div>
       </div>
     );
@@ -342,7 +410,7 @@ export const App: React.FC = () => {
         <p className="text-xs text-[#6B7280] max-w-xs mb-6 leading-relaxed">
           تم تعليق استخدام هذا الحساب مؤقتاً لمراجعة معايير السلامة والتكافل.
         </p>
-        <button onClick={() => supabase.auth.signOut()} className="text-xs text-[#146B44] font-bold">
+        <button onClick={handleSignOut} className="text-xs text-[#146B44] font-bold">
           تسجيل الخروج
         </button>
       </div>
@@ -371,6 +439,7 @@ export const App: React.FC = () => {
             </button>
           </div>
         </div>
+        {installNotice}
       </div>
     );
   }
@@ -433,6 +502,7 @@ export const App: React.FC = () => {
                 الدخول باستخدام Google
               </button>
             </form>
+            {installNotice}
         </div>
       </div>
     );
@@ -451,7 +521,7 @@ export const App: React.FC = () => {
           <AlertCircle className="w-8 h-8 mx-auto text-[#B53A3A]" />
           <h2 className="font-bold text-[#1F2430]">الدور غير مكتمل</h2>
           <p className="text-xs text-[#6B7280]">حسابك لا يحتوي على دور صالح في جدول profiles.</p>
-          <button onClick={() => supabase.auth.signOut()} className="text-xs text-[#146B44] font-bold">تسجيل الخروج</button>
+          <button onClick={handleSignOut} className="text-xs text-[#146B44] font-bold">تسجيل الخروج</button>
         </div>
       </div>
     );
@@ -459,6 +529,7 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#F7F8F9] flex flex-col text-right">
+      {installNotice}
       <header className="bg-white border-b border-[#8A949E]/20 p-4 sticky top-0 z-40">
         <div className="max-w-2xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -473,7 +544,7 @@ export const App: React.FC = () => {
                 تثبيت التطبيق
               </button>
             )}
-            <button onClick={() => supabase.auth.signOut()} className="text-xs text-[#6B7280] hover:text-[#1F2430]">
+            <button onClick={handleSignOut} className="text-xs text-[#6B7280] hover:text-[#1F2430]">
               تسجيل الخروج
             </button>
           </div>

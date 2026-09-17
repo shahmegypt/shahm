@@ -7,15 +7,30 @@ interface BeforeInstallPromptEvent extends Event {
 
 export function useInstallPrompt() {
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
+    const standalone = window.matchMedia('(display-mode: standalone)').matches ||
+      Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone);
+    setIsInstalled(standalone);
+    setIsIOS(/iphone|ipad|ipod/i.test(window.navigator.userAgent));
+
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       setInstallEvent(event as BeforeInstallPromptEvent);
     };
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      setInstallEvent(null);
+    };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
   }, []);
 
   const install = async () => {
@@ -27,5 +42,11 @@ export function useInstallPrompt() {
     return choice.outcome === 'accepted';
   };
 
-  return { canInstall: installEvent !== null, install };
+  return {
+    canInstall: !isInstalled && installEvent !== null,
+    showManualInstructions: !isInstalled && isIOS,
+    showInstallPrompt: !isInstalled,
+    isInstalled,
+    install,
+  };
 }
