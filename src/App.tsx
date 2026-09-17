@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase, supabaseUrl, UserRole, PublicTrip, ContactCardData, RequesterRelation } from './lib/supabase';
 import { LocationPicker } from './components/common/LocationPicker';
 import { ReportModal } from './components/common/ReportModal';
@@ -71,6 +71,7 @@ export const App: React.FC = () => {
   const [sessionLoading, setSessionLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
+  const activeUserId = useRef<string | null>(null);
 
   // Requester States
   const [origin, setOrigin] = useState<{ areaLabel: string; fullAddress: string; lat: number; lng: number } | null>(null);
@@ -113,6 +114,7 @@ export const App: React.FC = () => {
     try {
       await supabase.auth.signOut();
     } finally {
+      activeUserId.current = null;
       supabase.removeAllChannels();
       localStorage.removeItem('shahm.pendingProfile');
       setSessionUser(null);
@@ -139,6 +141,7 @@ export const App: React.FC = () => {
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) setProfileError(`تعذر استعادة جلسة الدخول: ${error.message}`);
       setSessionUser(session?.user ?? null);
+      activeUserId.current = session?.user.id ?? null;
       if (session?.user) fetchProfile(session.user.id);
       else setSessionLoading(false);
     }).catch((error: unknown) => {
@@ -148,6 +151,7 @@ export const App: React.FC = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSessionUser(session?.user ?? null);
+      activeUserId.current = session?.user.id ?? null;
       if (session?.user) {
         fetchProfile(session.user.id);
       } else {
@@ -166,21 +170,23 @@ export const App: React.FC = () => {
     try {
       const { data, error } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle();
       if (error) throw error;
+      if (activeUserId.current !== uid) return;
       if (!data) {
         const pendingProfile = JSON.parse(localStorage.getItem('shahm.pendingProfile') || 'null');
         if (pendingProfile?.firstName && pendingProfile?.phone && pendingProfile?.role) {
           const { data: createdProfile, error: createError } = await supabase
             .from('profiles')
-            .insert({
+            .upsert({
               id: uid,
               first_name: pendingProfile.firstName,
               phone_number: pendingProfile.phone,
               role: pendingProfile.role,
               verification_status: 'unverified',
-            })
+            }, { onConflict: 'id' })
             .select()
             .single();
           if (createError) throw createError;
+          if (activeUserId.current !== uid) return;
           setProfile(createdProfile);
           localStorage.removeItem('shahm.pendingProfile');
         } else {
@@ -319,8 +325,15 @@ export const App: React.FC = () => {
         }),
       });
 
-      const resJson = await response.json();
-      if (!response.ok) throw new Error(resJson.error || 'فشل إنشاء الطلب');
+      const responseText = await response.text();
+      let resJson: { error?: string; trip_id?: string } = {};
+      try {
+        resJson = JSON.parse(responseText);
+      } catch {
+        resJson = { error: responseText };
+      }
+      if (!response.ok) throw new Error(resJson.error || `فشل إنشاء الطلب (${response.status})`);
+      if (!resJson.trip_id) throw new Error('تم استلام الطلب بدون رقم طلب من الخادم');
 
       const { data } = await supabase
         .from('trips')

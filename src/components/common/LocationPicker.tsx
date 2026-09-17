@@ -32,31 +32,36 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({ label, placehold
       return;
     }
 
-    // مؤقت 1.1 ثانية لحماية الخطة المجانية ومنع حظر الـ IP
+    const controller = new AbortController();
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-            query
-          )}&addressdetails=1&limit=4&email=contact@shahm.pages.dev`,
+          `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(
+            query.trim()
+          )}&addressdetails=1&limit=8&accept-language=ar`,
           {
             headers: {
               'Accept-Language': 'ar',
             },
+            signal: controller.signal,
           }
         );
         if (!response.ok) throw new Error('Geocoding error');
         const data = await response.json();
         setResults(data);
-      } catch {
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
         setResults([]);
       } finally {
         setLoading(false);
       }
-    }, 1100);
+    }, 350);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [query, selectedText]);
 
   const handlePick = (item: LocationResult) => {
