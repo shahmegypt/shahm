@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family: 'Tajawal', 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  background-color: #F7F8F9;
+  -webkit-tap-highlight-color: transparent;
+}
