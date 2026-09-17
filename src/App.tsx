@@ -23,7 +23,8 @@ import {
   AlertTriangle,
   LayoutDashboard,
   ShieldAlert,
-  Server
+  Server,
+  Download
 } from 'lucide-react';
 
 type InstallNoticeProps = {
@@ -35,21 +36,58 @@ type InstallNoticeProps = {
 };
 
 const InstallNotice: React.FC<InstallNoticeProps> = ({ canInstall, showManualInstructions, onInstall, onDismiss, message }) => (
-  <div className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-md rounded-2xl border border-[#146B44]/20 bg-white p-4 text-right shadow-xl" role="dialog" aria-label="تثبيت تطبيق شَهْم">
-    <button onClick={onDismiss} aria-label="إغلاق" className="float-left text-lg text-[#6B7280]">×</button>
-    <h2 className="font-bold text-[#1F2430]">نزّل تطبيق شَهْم</h2>
-    {showManualInstructions ? (
-      <ol className="mt-2 list-decimal pr-5 text-xs leading-6 text-[#6B7280]">
-        <li>اضغط مشاركة من المتصفح.</li>
-        <li>اختار «إضافة إلى الشاشة الرئيسية».</li>
-        <li>افتح شَهْم من الأيقونة بعد التثبيت.</li>
-      </ol>
-    ) : (
-      <p className="mt-1 text-xs leading-5 text-[#6B7280]">استخدم شَهْم كتطبيق على موبايلك عشان الوصول للخدمة يبقى أسهل وأسرع.</p>
-    )}
-    {message && <p className="mt-2 text-xs font-semibold text-[#146B44]">{message}</p>}
-    {!message && canInstall && <button onClick={onInstall} className="mt-3 h-10 rounded-xl bg-[#146B44] px-4 text-xs font-bold text-white">نزّل التطبيق</button>}
-    {!message && !canInstall && !showManualInstructions && <p className="mt-2 text-xs text-[#6B7280]">استخدم قائمة المتصفح ثم اختر إضافة إلى الشاشة الرئيسية.</p>}
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in" role="dialog" aria-label="تثبيت تطبيق شَهْم">
+    <div className="bg-white rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl relative border border-[#146B44]/20">
+      <button 
+        onClick={onDismiss} 
+        aria-label="إغلاق" 
+        className="absolute top-3 left-3 text-gray-400 hover:text-gray-600 p-1 rounded-full transition-colors"
+      >
+        <X className="w-5 h-5" />
+      </button>
+
+      <div className="w-16 h-16 bg-[#E6F4ED] text-[#146B44] rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
+        <Download className="w-8 h-8" />
+      </div>
+
+      <h2 className="text-xl font-bold text-[#1F2430] mb-2">تثبيت تطبيق شَهْم</h2>
+
+      {showManualInstructions ? (
+        <div className="text-right bg-[#F7F8F9] p-3 rounded-xl mb-4 text-xs leading-6 text-[#6B7280] border border-gray-100">
+          <p className="font-semibold text-[#1F2430] mb-1">خطوات التثبيت على جهازك:</p>
+          <ol className="list-decimal pr-5 space-y-1">
+            <li>اضغط زر مشاركة (Share) من المتصفح.</li>
+            <li>اختر «إضافة إلى الشاشة الرئيسية».</li>
+            <li>افتح شَهْم من الأيقونة مباشرة.</li>
+          </ol>
+        </div>
+      ) : (
+        <p className="text-xs text-[#6B7280] mb-6 leading-relaxed">
+          قم بتثبيت التطبيق على شاشة هاتفك الرئيسية للوصول السريع، وتلقي التنبيهات، والعمل بأفضل أداء.
+        </p>
+      )}
+
+      {message && <p className="mb-4 text-xs font-semibold text-[#146B44] bg-[#E6F4ED] p-2.5 rounded-xl border border-[#146B44]/20">{message}</p>}
+
+      <div className="flex flex-col gap-2">
+        {!message && canInstall && (
+          <button 
+            onClick={onInstall} 
+            className="w-full h-12 rounded-xl bg-[#146B44] active:bg-[#0F5636] text-white text-sm font-bold flex items-center justify-center gap-2 transition-colors shadow-md"
+          >
+            <Download className="w-4 h-4" />
+            تثبيت التطبيق الآن
+          </button>
+        )}
+
+        <button 
+          onClick={onDismiss} 
+          className="w-full text-[#6B7280] hover:text-[#1F2430] text-xs py-2 font-medium transition-colors"
+        >
+          المتابعة عبر المتصفح
+        </button>
+      </div>
+    </div>
   </div>
 );
 
@@ -97,7 +135,7 @@ export const App: React.FC = () => {
 
   const handleInstall = async () => {
     const installed = await install();
-    setInstallMessage(installed ? 'تم تجهيز التطبيق للاستخدام.' : 'لم يتم التثبيت. يمكنك المحاولة مرة أخرى من قائمة المتصفح.');
+    setInstallMessage(installed ? 'تم تجهيز التطبيق للاستخدام بنجاح.' : 'لم يتم التثبيت. يمكنك المحاولة لاحقاً من قائمة المتصفح.');
   };
 
   const installNotice = showInstallPrompt && !installDismissed ? (
@@ -111,7 +149,7 @@ export const App: React.FC = () => {
   ) : null;
 
   const configurationNotice = !hasSupabaseConfig ? (
-    <div className="fixed top-4 left-4 right-4 z-50 mx-auto max-w-md rounded-xl border border-[#E8A33D]/40 bg-[#FBEFDC] p-3 text-right text-xs text-[#8F5A0A]" role="alert">
+    <div className="fixed top-4 left-4 right-4 z-40 mx-auto max-w-md rounded-xl border border-[#E8A33D]/40 bg-[#FBEFDC] p-3 text-right text-xs text-[#8F5A0A]" role="alert">
       التطبيق يحتاج ضبط مفتاح Supabase العام في إعدادات النشر قبل تسجيل الدخول.
     </div>
   ) : null;
@@ -205,7 +243,7 @@ export const App: React.FC = () => {
     } catch (error: unknown) {
       setProfile(null);
       setProfileError(error instanceof Error ? error.message : 'تعذر تحميل بيانات المستخدم');
-    } finally {
+    } fontally {
       setProfileLoading(false);
       setSessionLoading(false);
     }
@@ -462,7 +500,6 @@ export const App: React.FC = () => {
           </div>
         </div>
         {configurationNotice}
-        {configurationNotice}
         {installNotice}
       </div>
     );
@@ -492,49 +529,48 @@ export const App: React.FC = () => {
           )}
 
           <form onSubmit={(event) => { event.preventDefault(); handleGoogleLogin(); }} className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-[#1F2430] mb-1">اسمك الأول</label>
-                <input
-                  type="text"
-                  required
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="مثال: أحمد"
-                  className="w-full h-[52px] px-4 bg-white border border-[#8A949E] rounded-xl text-base text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-semibold text-[#1F2430] mb-1">اسمك الأول</label>
+              <input
+                type="text"
+                required
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="مثال: أحمد"
+                className="w-full h-[52px] px-4 bg-white border border-[#8A949E] rounded-xl text-base text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
+              />
+            </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-[#1F2430] mb-1">رقم الجوال (للتواصل)</label>
-                <input
-                  type="tel"
-                  required
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="01XXXXXXXXX"
-                  className="w-full h-[52px] px-4 bg-white border border-[#8A949E] rounded-xl text-base text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-semibold text-[#1F2430] mb-1">رقم الجوال (للتواصل)</label>
+              <input
+                type="tel"
+                required
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="01XXXXXXXXX"
+                className="w-full h-[52px] px-4 bg-white border border-[#8A949E] rounded-xl text-base text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
+              />
+            </div>
 
-              <button
-                type="button"
-                onClick={handleGoogleLogin}
-                disabled={authLoading}
-                className="w-full h-[52px] bg-white border border-[#8A949E] text-[#1F2430] font-semibold rounded-xl text-base hover:bg-[#F7F8F9] transition-colors flex items-center justify-center gap-2"
-              >
-                {authLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <span className="font-bold text-[#4285F4]">G</span>}
-                الدخول باستخدام Google
-              </button>
-            </form>
-            {installNotice}
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              disabled={authLoading}
+              className="w-full h-[52px] bg-white border border-[#8A949E] text-[#1F2430] font-semibold rounded-xl text-base hover:bg-[#F7F8F9] transition-colors flex items-center justify-center gap-2"
+            >
+              {authLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <span className="font-bold text-[#4285F4]">G</span>}
+              الدخول باستخدام Google
+            </button>
+          </form>
         </div>
+        {configurationNotice}
+        {installNotice}
       </div>
     );
   }
 
   const isAdmin = profile?.role && ['ops_admin', 'super_admin', 'analytics_viewer'].includes(profile.role);
-  // ملاحظة إصلاح: المشرفون ليسوا أبداً بدور 'requester'، لذلك تعرض تبويبة "المشاوير"
-  // للمشرفين دائماً واجهة المتطوع (للعمل الميداني)، والمستخدم العادي يرى واجهته حسب دوره فقط.
   const showRequesterView = profile?.role === 'requester';
   const showVolunteerView = profile?.role === 'volunteer' || (isAdmin && adminTab === 'trips');
 
@@ -555,6 +591,7 @@ export const App: React.FC = () => {
     <div className="min-h-screen bg-[#F7F8F9] flex flex-col text-right">
       {configurationNotice}
       {installNotice}
+
       <header className="bg-white border-b border-[#8A949E]/20 p-4 sticky top-0 z-40">
         <div className="max-w-2xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -565,7 +602,8 @@ export const App: React.FC = () => {
           </div>
           <div className="flex items-center gap-3">
             {canInstall && (
-              <button onClick={install} className="text-xs text-[#146B44] font-semibold">
+              <button onClick={install} className="text-xs text-[#146B44] font-semibold flex items-center gap-1">
+                <Download className="w-3.5 h-3.5" />
                 تثبيت التطبيق
               </button>
             )}
