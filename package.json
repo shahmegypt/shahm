@@ -3,9 +3,9 @@
   "private": true,
   "version": "1.6.1",
   "type": "module",
-  "scripts": {
+ "scripts": {
     "dev": "vite --host",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
   },
