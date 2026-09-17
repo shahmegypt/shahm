@@ -17,15 +17,18 @@ type CreateTripPayload = {
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
 const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-const allowedOrigin = Deno.env.get('ALLOWED_ORIGIN') ?? '';
+const allowedOrigins = (Deno.env.get('ALLOWED_ORIGINS') ?? '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
-if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey || !allowedOrigin) {
+if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey || allowedOrigins.length === 0) {
   throw new Error('Supabase function environment is incomplete');
 }
 
 const jsonHeaders = (request: Request) => {
   const requestOrigin = request.headers.get('origin') ?? '';
-  const allowOrigin = allowedOrigin && requestOrigin === allowedOrigin ? allowedOrigin : 'null';
+  const allowOrigin = allowedOrigins.includes('*') ? '*' : requestOrigin;
 
   return {
     'Access-Control-Allow-Origin': allowOrigin,
@@ -38,7 +41,7 @@ const jsonHeaders = (request: Request) => {
 
 const isAllowedOrigin = (request: Request) => {
   const requestOrigin = request.headers.get('origin');
-  return !allowedOrigin || requestOrigin === allowedOrigin;
+  return allowedOrigins.includes('*') || (!!requestOrigin && allowedOrigins.includes(requestOrigin));
 };
 
 const response = (request: Request, status: number, body: Record<string, unknown>) =>
