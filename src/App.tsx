@@ -241,12 +241,12 @@ export const App: React.FC = () => {
         setProfile(data);
       }
     } catch (error: unknown) {
-      setProfile(null);
-      setProfileError(error instanceof Error ? error.message : 'تعذر تحميل بيانات المستخدم');
-    } finally {
-      setProfileLoading(false);
-      setSessionLoading(false);
-    }
+    setProfile(null);
+setProfileError(error instanceof Error ? error.message : 'تعذر تحميل بيانات المستخدم');
+} finally {
+  setProfileLoading(false);
+  setSessionLoading(false);
+}
   };
 
   useEffect(() => {
