@@ -24,7 +24,7 @@ export default defineConfig({
         dir: 'rtl',
       },
       injectManifest: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
       },
     }),
   ],
