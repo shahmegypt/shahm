@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Download, X } from 'lucide-react';
 
 interface InstallModalProps {
@@ -14,6 +14,7 @@ export const InstallModal: React.FC<InstallModalProps> = ({ deferredPrompt, onCl
     const { outcome } = await deferredPrompt.userChoice;
 
     if (outcome === 'accepted') {
+      console.log('تم تثبيت التطبيق بنجاح');
       onClose();
     }
   };
@@ -29,7 +30,7 @@ export const InstallModal: React.FC<InstallModalProps> = ({ deferredPrompt, onCl
         </button>
 
         <div className="text-center space-y-4">
-          <div className="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-blue-600">
+          <div className="bg-emerald-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-emerald-600">
             <Download className="w-8 h-8" />
           </div>
 
@@ -48,7 +49,7 @@ export const InstallModal: React.FC<InstallModalProps> = ({ deferredPrompt, onCl
             </button>
             <button
               onClick={handleInstallClick}
-              className="flex-1 py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors"
+              className="flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium transition-colors"
             >
               تثبيت الآن
             </button>
