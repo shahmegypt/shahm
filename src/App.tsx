@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase, supabaseUrl, UserRole, PublicTrip, ContactCardData, RequesterRelation } from './lib/supabase';
+import { hasSupabaseConfig, supabase, supabaseUrl, UserRole, PublicTrip, ContactCardData, RequesterRelation } from './lib/supabase';
 import { LocationPicker } from './components/common/LocationPicker';
 import { ReportModal } from './components/common/ReportModal';
 import { RaceConditionToast } from './components/common/StateViews';
@@ -108,6 +108,12 @@ export const App: React.FC = () => {
       onDismiss={() => setInstallDismissed(true)}
       message={installMessage}
     />
+  ) : null;
+
+  const configurationNotice = !hasSupabaseConfig ? (
+    <div className="fixed top-4 left-4 right-4 z-50 mx-auto max-w-md rounded-xl border border-[#E8A33D]/40 bg-[#FBEFDC] p-3 text-right text-xs text-[#8F5A0A]" role="alert">
+      التطبيق يحتاج ضبط مفتاح Supabase العام في إعدادات النشر قبل تسجيل الدخول.
+    </div>
   ) : null;
 
   const handleSignOut = async () => {
@@ -455,6 +461,8 @@ export const App: React.FC = () => {
             </button>
           </div>
         </div>
+        {configurationNotice}
+        {configurationNotice}
         {installNotice}
       </div>
     );
@@ -545,6 +553,7 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#F7F8F9] flex flex-col text-right">
+      {configurationNotice}
       {installNotice}
       <header className="bg-white border-b border-[#8A949E]/20 p-4 sticky top-0 z-40">
         <div className="max-w-2xl mx-auto flex justify-between items-center">

@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 export const supabaseUrl = 'https://giojwpngkxddnuhqqvnt.supabase.co';
+export const hasSupabaseConfig = Boolean(import.meta.env.VITE_SUPABASE_ANON_KEY);
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'missing-anon-key';
 
 // The linked project currently exposes an empty public schema in generated types.
