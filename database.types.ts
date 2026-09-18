@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -11,31 +11,6 @@ export type Database = {
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.5"
-  }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
   }
   public: {
     Tables: {
@@ -100,6 +75,8 @@ export type Database = {
           first_name: string
           id: string
           is_active: boolean
+          patient_age: number | null
+          patient_condition: string | null
           phone_number: string
           role: Database["public"]["Enums"]["user_role"]
           verification_status: Database["public"]["Enums"]["verification_status"]
@@ -109,6 +86,8 @@ export type Database = {
           first_name: string
           id: string
           is_active?: boolean
+          patient_age?: number | null
+          patient_condition?: string | null
           phone_number: string
           role: Database["public"]["Enums"]["user_role"]
           verification_status?: Database["public"]["Enums"]["verification_status"]
@@ -118,6 +97,8 @@ export type Database = {
           first_name?: string
           id?: string
           is_active?: boolean
+          patient_age?: number | null
+          patient_condition?: string | null
           phone_number?: string
           role?: Database["public"]["Enums"]["user_role"]
           verification_status?: Database["public"]["Enums"]["verification_status"]
@@ -259,6 +240,7 @@ export type Database = {
           origin_area_label: string
           requester_id: string
           requester_relation: Database["public"]["Enums"]["requester_relation"]
+          scheduled_at: string | null
           status: Database["public"]["Enums"]["trip_status"]
           volunteer_id: string | null
         }
@@ -274,6 +256,7 @@ export type Database = {
           origin_area_label: string
           requester_id: string
           requester_relation?: Database["public"]["Enums"]["requester_relation"]
+          scheduled_at?: string | null
           status?: Database["public"]["Enums"]["trip_status"]
           volunteer_id?: string | null
         }
@@ -289,6 +272,7 @@ export type Database = {
           origin_area_label?: string
           requester_id?: string
           requester_relation?: Database["public"]["Enums"]["requester_relation"]
+          scheduled_at?: string | null
           status?: Database["public"]["Enums"]["trip_status"]
           volunteer_id?: string | null
         }
@@ -362,109 +346,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      accept_trip: {
-        Args: { p_trip_id: string }
-        Returns: {
-          destination_address: string
-          destination_lat: number
-          destination_lng: number
-          origin_address: string
-          origin_lat: number
-          origin_lng: number
-          requester_first_name: string
-          requester_phone: string
-          requester_relation: Database["public"]["Enums"]["requester_relation"]
-          trip_id: string
-        }[]
-      }
-      cancel_trip: { Args: { p_trip_id: string }; Returns: undefined }
-      complete_trip: { Args: { p_trip_id: string }; Returns: undefined }
-      create_trip: {
-        Args: {
-          p_client_ip: unknown
-          p_destination_address: string
-          p_destination_area_label: string
-          p_destination_lat: number
-          p_destination_lng: number
-          p_origin_address: string
-          p_origin_area_label: string
-          p_origin_lat: number
-          p_origin_lng: number
-          p_requester_relation: Database["public"]["Enums"]["requester_relation"]
-        }
-        Returns: string
-      }
-      create_trip_from_proxy: {
-        Args: {
-          p_client_ip: unknown
-          p_destination_address: string
-          p_destination_area_label: string
-          p_destination_lat: number
-          p_destination_lng: number
-          p_origin_address: string
-          p_origin_area_label: string
-          p_origin_lat: number
-          p_origin_lng: number
-          p_requester_id: string
-          p_requester_relation: Database["public"]["Enums"]["requester_relation"]
-        }
-        Returns: string
-      }
-      get_analytics_kpis: {
-        Args: never
-        Returns: {
-          cancellation_rate: number
-          cancelled_trips: number
-          completed_trips: number
-          completion_rate: number
-          total_requesters: number
-          total_trips: number
-          total_users: number
-          total_volunteers: number
-        }[]
-      }
-      get_geographic_distribution: {
-        Args: { p_min_threshold: number }
-        Returns: {
-          origin_area_label: string
-          trip_count: number
-        }[]
-      }
-      get_peak_hours_distribution: {
-        Args: never
-        Returns: {
-          hour_of_day: number
-          trip_count: number
-        }[]
-      }
-      is_admin: { Args: never; Returns: boolean }
-      reveal_contact: {
-        Args: { p_trip_id: string }
-        Returns: {
-          destination_address: string
-          destination_lat: number
-          destination_lng: number
-          origin_address: string
-          origin_lat: number
-          origin_lng: number
-          requester_first_name: string
-          requester_phone: string
-          requester_relation: Database["public"]["Enums"]["requester_relation"]
-          trip_id: string
-        }[]
-      }
-      submit_report: {
-        Args: {
-          p_reason: string
-          p_reported_profile_id: string
-          p_trip_id: string
-        }
-        Returns: string
-      }
-      suspend_account: {
-        Args: { p_reason: string; p_target_profile_id: string }
-        Returns: undefined
-      }
+      [_ in never]: never
     }
     Enums: {
       report_status: "pending" | "reviewed" | "dismissed" | "actioned"
@@ -607,9 +489,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       report_status: ["pending", "reviewed", "dismissed", "actioned"],

@@ -3,14 +3,14 @@
   "private": true,
   "version": "1.6.1",
   "type": "module",
- "scripts": {
+  "scripts": {
     "dev": "vite --host",
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.39.8",
+    "@supabase/supabase-js": "^2.116.0",
     "clsx": "^2.1.0",
     "lucide-react": "^0.359.0",
     "react": "^18.2.0",
