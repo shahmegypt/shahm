@@ -1853,12 +1853,13 @@ export const App: React.FC = () => {
                   </div>
                 )}
 
-                <LocationPicker
+            <LocationPicker
                   label="هتتحرك منين؟"
                   placeholder="ابحث عن منطقتك أو حيك"
                   onSelect={(val) =>
                     setOrigin(val)
                   }
+                  allowCurrentLocation
                 />
 
                 <LocationPicker
