@@ -6,11 +6,16 @@ interface LocationResult {
   lat: string;
   lon: string;
   address: {
-    suburb?: string;
     neighbourhood?: string;
-    city?: string;
-    town?: string;
+    suburb?: string;
+    quarter?: string;
+    city_district?: string;
     hospital?: string;
+    town?: string;
+    village?: string;
+    city?: string;
+    county?: string;
+    state?: string;
     country_code?: string;
   };
 }
@@ -30,6 +35,54 @@ interface LocationPickerProps {
 // results in the US, Libya or Qatar).
 const EGYPT_VIEWBOX = '24.6,31.9,37.0,21.9';
 const EGYPT_NOMINATIM_PARAMS = 'countrycodes=eg&viewbox=' + EGYPT_VIEWBOX + '&bounded=1';
+
+// Plot/building numbers ("483", "12-B") are common in Nominatim's data for
+// newer Egyptian developments and are useless as a stand-alone area label —
+// a volunteer can't judge distance or "is it on my way" from a bare number.
+const isNumericOnly = (value: string) => /^[\d\s\-\/]+$/.test(value.trim());
+
+const pickAreaLabel = (item: LocationResult): string => {
+  const addr = item.address || {};
+
+  // Most specific → least specific named-place fields, skipping anything
+  // that's just digits.
+  const namedCandidates = [
+    addr.neighbourhood,
+    addr.suburb,
+    addr.quarter,
+    addr.city_district,
+    addr.hospital,
+    addr.town,
+    addr.village,
+    addr.city,
+    addr.county,
+  ].filter((c): c is string => !!c && !isNumericOnly(c));
+
+  const cityContext = addr.city || addr.town || addr.village || addr.county || addr.state;
+
+  if (namedCandidates.length > 0) {
+    const primary = namedCandidates[0];
+    // Add the city/town alongside the neighbourhood so the volunteer gets
+    // real geographic context (e.g. "الحي السابع، 6 أكتوبر" instead of a
+    // hyper-local name that means nothing outside its own district).
+    if (cityContext && cityContext !== primary) {
+      return `${primary}، ${cityContext}`;
+    }
+    return primary;
+  }
+
+  // Nothing named in the structured address — fall back to the full
+  // display_name, but skip any leading numeric-only segments (plot/building
+  // numbers) rather than showing "483" on its own.
+  const parts = item.display_name.split(',').map((p) => p.trim()).filter(Boolean);
+  const firstMeaningfulPart = parts.find((p) => !isNumericOnly(p));
+
+  if (firstMeaningfulPart && cityContext && firstMeaningfulPart !== cityContext) {
+    return `${firstMeaningfulPart}، ${cityContext}`;
+  }
+
+  return firstMeaningfulPart || cityContext || parts[0] || item.display_name;
+};
 
 export const LocationPicker: React.FC<LocationPickerProps> = ({ label, placeholder, onSelect, allowCurrentLocation }) => {
   const [query, setQuery] = useState('');
@@ -83,12 +136,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({ label, placehold
   }, [query, selectedText]);
 
   const applyResult = (item: LocationResult) => {
-    const area =
-      item.address.suburb ||
-      item.address.neighbourhood ||
-      item.address.hospital ||
-      item.address.city ||
-      item.display_name.split(',')[0];
+    const area = pickAreaLabel(item);
 
     setSelectedText(item.display_name);
     setQuery(item.display_name);
