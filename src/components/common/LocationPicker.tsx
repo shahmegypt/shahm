@@ -62,18 +62,12 @@ const pickAreaLabel = (item: LocationResult): string => {
 
   if (namedCandidates.length > 0) {
     const primary = namedCandidates[0];
-    // Add the city/town alongside the neighbourhood so the volunteer gets
-    // real geographic context (e.g. "الحي السابع، 6 أكتوبر" instead of a
-    // hyper-local name that means nothing outside its own district).
     if (cityContext && cityContext !== primary) {
       return `${primary}، ${cityContext}`;
     }
     return primary;
   }
 
-  // Nothing named in the structured address — fall back to the full
-  // display_name, but skip any leading numeric-only segments (plot/building
-  // numbers) rather than showing "483" on its own.
   const parts = item.display_name.split(',').map((p) => p.trim()).filter(Boolean);
   const firstMeaningfulPart = parts.find((p) => !isNumericOnly(p));
 
@@ -115,8 +109,6 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({ label, placehold
         );
         if (!response.ok) throw new Error('Geocoding error');
         const data = await response.json();
-        // Belt-and-suspenders: even with bounded=1, drop anything Nominatim
-        // still returns outside Egypt (e.g. a border town's polygon).
         const egyptOnly = (data as LocationResult[]).filter(
           (item) => !item.address?.country_code || item.address.country_code.toLowerCase() === 'eg'
         );
@@ -174,7 +166,21 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({ label, placehold
             return;
           }
 
-          applyResult(item);
+          const area = pickAreaLabel(item);
+          setSelectedText(item.display_name);
+          setQuery(item.display_name);
+          setResults([]);
+
+          // Use the device's raw GPS fix for lat/lng — Nominatim reverse
+          // geocoding often snaps to the nearest indexed building/road,
+          // which can be off by hundreds of meters in areas with sparse
+          // map data. Only the human-readable label/address comes from it.
+          onSelect({
+            areaLabel: area.trim(),
+            fullAddress: item.display_name,
+            lat: latitude,
+            lng: longitude,
+          });
         } catch {
           setLocateError('تعذر تحديد اسم موقعك، حاول تاني أو ابحث يدويًا.');
         } finally {
