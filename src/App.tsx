@@ -79,6 +79,7 @@ const InstallNotice: React.FC<InstallNoticeProps> = ({
           <p className="font-semibold text-[#1F2430] mb-1">
             خطوات التثبيت على جهازك:
           </p>
+
           <ol className="list-decimal pr-5 space-y-1">
             <li>اضغط زر مشاركة (Share) من المتصفح.</li>
             <li>اختر «إضافة إلى الشاشة الرئيسية».</li>
@@ -165,11 +166,17 @@ const formatDistance = (distance?: number | null) => {
     return null;
   }
 
-  if (distance < 1) {
-    return `${Math.round(distance * 1000)} متر`;
+  if (!Number.isFinite(Number(distance))) {
+    return null;
   }
 
-  return `${distance.toFixed(1)} كم`;
+  const numericDistance = Number(distance);
+
+  if (numericDistance < 1) {
+    return `${Math.round(numericDistance * 1000)} متر`;
+  }
+
+  return `${numericDistance.toFixed(1)} كم`;
 };
 
 export const App: React.FC = () => {
@@ -189,10 +196,16 @@ export const App: React.FC = () => {
   const [patientCondition, setPatientCondition] = useState('');
 
   const [authLoading, setAuthLoading] = useState(false);
+
   const [errorMessage, setErrorMessage] =
     useState<string | null>(null);
-  const [sessionLoading, setSessionLoading] = useState(true);
-  const [profileLoading, setProfileLoading] = useState(false);
+
+  const [sessionLoading, setSessionLoading] =
+    useState(true);
+
+  const [profileLoading, setProfileLoading] =
+    useState(false);
+
   const [profileError, setProfileError] =
     useState<string | null>(null);
 
@@ -218,15 +231,15 @@ export const App: React.FC = () => {
   const [scheduledAt, setScheduledAt] = useState('');
 
   const [ackChecked, setAckChecked] = useState(false);
+
   const [createTripLoading, setCreateTripLoading] =
     useState(false);
 
   const [activeRequesterTrip, setActiveRequesterTrip] =
     useState<PublicTrip | null>(null);
 
-  const [pendingTrips, setPendingTrips] = useState<PublicTrip[]>(
-    [],
-  );
+  const [pendingTrips, setPendingTrips] =
+    useState<PublicTrip[]>([]);
 
   const [
     activeVolunteerTripData,
@@ -236,9 +249,8 @@ export const App: React.FC = () => {
   const [selectedTripDetails, setSelectedTripDetails] =
     useState<PublicTrip | null>(null);
 
-  const [acceptingTripId, setAcceptingTripId] = useState<
-    string | null
-  >(null);
+  const [acceptingTripId, setAcceptingTripId] =
+    useState<string | null>(null);
 
   const [raceConditionDetected, setRaceConditionDetected] =
     useState(false);
@@ -248,7 +260,8 @@ export const App: React.FC = () => {
     lng: number;
   } | null>(null);
 
-  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationLoading, setLocationLoading] =
+    useState(false);
 
   const [locationError, setLocationError] =
     useState<string | null>(null);
@@ -256,8 +269,11 @@ export const App: React.FC = () => {
   const [loadingNearbyTrips, setLoadingNearbyTrips] =
     useState(false);
 
-  const [reportModalOpen, setReportModalOpen] = useState(false);
-  const [reportSuccess, setReportSuccess] = useState(false);
+  const [reportModalOpen, setReportModalOpen] =
+    useState(false);
+
+  const [reportSuccess, setReportSuccess] =
+    useState(false);
 
   const [installDismissed, setInstallDismissed] =
     useState(false);
@@ -342,70 +358,16 @@ export const App: React.FC = () => {
       setVolunteerLocation(null);
       setLocationError(null);
 
+      setScheduledAt('');
+      setOrigin(null);
+      setDest(null);
+      setAckChecked(false);
+
       setReportModalOpen(false);
       setReportSuccess(false);
       setAdminTab('trips');
     }
   };
-
-  useEffect(() => {
-    supabase.auth
-      .getSession()
-      .then(
-        ({
-          data: { session },
-          error,
-        }) => {
-          if (error) {
-            setProfileError(
-              `تعذر استعادة جلسة الدخول: ${error.message}`,
-            );
-          }
-
-          setSessionUser(session?.user ?? null);
-
-          activeUserId.current =
-            session?.user.id ?? null;
-
-          if (session?.user) {
-            fetchProfile(session.user.id);
-          } else {
-            setSessionLoading(false);
-          }
-        },
-      )
-      .catch((error: unknown) => {
-        setProfileError(
-          error instanceof Error
-            ? error.message
-            : 'تعذر استعادة جلسة الدخول',
-        );
-
-        setSessionLoading(false);
-      });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSessionUser(session?.user ?? null);
-
-        activeUserId.current =
-          session?.user.id ?? null;
-
-        if (session?.user) {
-          fetchProfile(session.user.id);
-        } else {
-          setProfile(null);
-          setProfileError(null);
-        }
-
-        setSessionLoading(false);
-      },
-    );
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   const fetchProfile = async (uid: string) => {
     setProfileLoading(true);
@@ -424,9 +386,8 @@ export const App: React.FC = () => {
 
       if (!data) {
         const pendingProfile = JSON.parse(
-          localStorage.getItem(
-            'shahm.pendingProfile',
-          ) || 'null',
+          localStorage.getItem('shahm.pendingProfile') ||
+            'null',
         );
 
         if (
@@ -479,8 +440,7 @@ export const App: React.FC = () => {
                     ? {
                         patient_age: age,
                         patient_condition:
-                          pendingProfile.patientCondition
-                            .trim(),
+                          pendingProfile.patientCondition.trim(),
                       }
                     : {}),
                 },
@@ -546,27 +506,37 @@ export const App: React.FC = () => {
           setLocationError(
             'تعذر قراءة موقعك الحالي.',
           );
+
           setLocationLoading(false);
           return;
         }
 
-        setVolunteerLocation({ lat, lng });
+        setVolunteerLocation({
+          lat,
+          lng,
+        });
+
         setLocationLoading(false);
       },
       (error) => {
         let message =
           'تعذر الحصول على موقعك الحالي.';
 
-        if (error.code === error.PERMISSION_DENIED) {
+        if (
+          error.code ===
+          error.PERMISSION_DENIED
+        ) {
           message =
             'اسمح للتطبيق باستخدام موقعك حتى نعرض الطلبات الموجودة ضمن 20 كم منك.';
         } else if (
-          error.code === error.POSITION_UNAVAILABLE
+          error.code ===
+          error.POSITION_UNAVAILABLE
         ) {
           message =
             'موقعك الحالي غير متاح. جرّب تشغيل GPS ثم المحاولة مرة أخرى.';
         } else if (
-          error.code === error.TIMEOUT
+          error.code ===
+          error.TIMEOUT
         ) {
           message =
             'انتهى وقت انتظار تحديد الموقع. حاول مرة أخرى.';
@@ -589,22 +559,28 @@ export const App: React.FC = () => {
       lng: number;
     },
   ) => {
+    if (profile?.role !== 'volunteer') {
+      return;
+    }
+
     const location =
-      locationOverride || volunteerLocation;
+      locationOverride ||
+      volunteerLocation;
 
     if (!location) return;
 
     setLoadingNearbyTrips(true);
 
     try {
-      const { data, error } = await supabase.rpc(
-        'get_pending_trips_nearby',
-        {
-          p_lat: location.lat,
-          p_lng: location.lng,
-          p_radius_km: 20,
-        },
-      );
+      const { data, error } =
+        await supabase.rpc(
+          'get_pending_trips_nearby',
+          {
+            p_lat: location.lat,
+            p_lng: location.lng,
+            p_radius_km: 20,
+          },
+        );
 
       if (error) throw error;
 
@@ -622,6 +598,117 @@ export const App: React.FC = () => {
     }
   };
 
+  const loadActiveVolunteerTrip = async (
+    uid: string,
+  ) => {
+    const { data, error } =
+      await supabase
+        .from('trips')
+        .select('id')
+        .eq('volunteer_id', uid)
+        .eq('status', 'accepted')
+        .limit(1)
+        .maybeSingle();
+
+    if (error || !data) {
+      return;
+    }
+
+    const { data: contact, error: contactError } =
+      await supabase.rpc(
+        'reveal_contact',
+        {
+          p_trip_id: data.id,
+        },
+      );
+
+    if (
+      !contactError &&
+      contact &&
+      contact.length > 0
+    ) {
+      setActiveVolunteerTripData(
+        contact[0] as ContactCardData,
+      );
+    }
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    supabase.auth
+      .getSession()
+      .then(
+        ({
+          data: { session },
+          error,
+        }) => {
+          if (cancelled) return;
+
+          if (error) {
+            setProfileError(
+              `تعذر استعادة جلسة الدخول: ${error.message}`,
+            );
+          }
+
+          setSessionUser(
+            session?.user ?? null,
+          );
+
+          activeUserId.current =
+            session?.user.id ?? null;
+
+          if (session?.user) {
+            void fetchProfile(
+              session.user.id,
+            );
+          } else {
+            setSessionLoading(false);
+          }
+        },
+      )
+      .catch((error: unknown) => {
+        if (cancelled) return;
+
+        setProfileError(
+          error instanceof Error
+            ? error.message
+            : 'تعذر استعادة جلسة الدخول',
+        );
+
+        setSessionLoading(false);
+      });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setSessionUser(
+          session?.user ?? null,
+        );
+
+        activeUserId.current =
+          session?.user.id ?? null;
+
+        if (session?.user) {
+          void fetchProfile(
+            session.user.id,
+          );
+        } else {
+          setProfile(null);
+          setProfileError(null);
+        }
+
+        setSessionLoading(false);
+      },
+    );
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, []);
+
   useEffect(() => {
     if (!profile) return;
 
@@ -629,7 +716,10 @@ export const App: React.FC = () => {
       supabase
         .from('trips')
         .select(TRIP_PUBLIC_COLUMNS)
-        .in('status', ['pending', 'accepted'])
+        .in('status', [
+          'pending',
+          'accepted',
+        ])
         .eq('requester_id', profile.id)
         .order('created_at', {
           ascending: false,
@@ -637,59 +727,31 @@ export const App: React.FC = () => {
         .limit(1)
         .then(({ data, error }) => {
           if (error) {
-            setErrorMessage(
-              error.message,
-            );
+            setErrorMessage(error.message);
             return;
           }
 
-          if (data && data.length > 0) {
+          if (
+            data &&
+            data.length > 0
+          ) {
             setActiveRequesterTrip(
               data[0] as unknown as PublicTrip,
             );
+          } else {
+            setActiveRequesterTrip(null);
           }
         });
 
       return;
     }
 
-    if (
-      profile.role === 'volunteer' ||
-      (typeof profile.role === 'string' &&
-        profile.role.includes('admin'))
-    ) {
+    if (profile.role === 'volunteer') {
       requestVolunteerLocation();
 
-      supabase
-        .from('trips')
-        .select('id')
-        .eq('volunteer_id', profile.id)
-        .eq('status', 'accepted')
-        .maybeSingle()
-        .then(async ({ data, error }) => {
-          if (error) {
-            return;
-          }
-
-          if (data) {
-            const { data: contact } =
-              await supabase.rpc(
-                'reveal_contact',
-                {
-                  p_trip_id: data.id,
-                },
-              );
-
-            if (
-              contact &&
-              contact.length > 0
-            ) {
-              setActiveVolunteerTripData(
-                contact[0],
-              );
-            }
-          }
-        });
+      void loadActiveVolunteerTrip(
+        profile.id,
+      );
 
       const channel = supabase
         .channel(
@@ -704,7 +766,7 @@ export const App: React.FC = () => {
           },
           () => {
             if (volunteerLocation) {
-              loadNearbyTrips(
+              void loadNearbyTrips(
                 volunteerLocation,
               );
             }
@@ -716,20 +778,69 @@ export const App: React.FC = () => {
         supabase.removeChannel(channel);
       };
     }
+
+    /*
+     * الـ Admin لا يستخدم get_pending_trips_nearby
+     * لأنها مخصصة للـ volunteer فقط.
+     *
+     * نترك شاشة الإدارة تعتمد على صلاحيات RLS الموجودة
+     * في المشروع بدون طلب GPS.
+     */
+    if (
+      profile.role === 'ops_admin' ||
+      profile.role === 'super_admin' ||
+      profile.role === 'analytics_viewer'
+    ) {
+      const channel = supabase
+        .channel(
+          `admin-trips-realtime-${profile.id}`,
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'trips',
+          },
+          () => {
+            /*
+             * شاشة الإدارة تعالج بياناتها من مكوناتها
+             * الحالية. لا نستدعي RPC الخاص بالمتطوع.
+             */
+          },
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
   }, [profile]);
 
   useEffect(() => {
-    if (!volunteerLocation) return;
+    if (
+      profile?.role !== 'volunteer' ||
+      !volunteerLocation
+    ) {
+      return;
+    }
 
-    loadNearbyTrips(volunteerLocation);
-  }, [volunteerLocation]);
+    void loadNearbyTrips(
+      volunteerLocation,
+    );
+  }, [
+    profile?.role,
+    volunteerLocation,
+  ]);
 
   const handleGoogleLogin = async () => {
     setErrorMessage(null);
 
     if (
       !firstName.trim() ||
-      !/^01\d{9}$/.test(phone.trim())
+      !/^01\d{9}$/.test(
+        phone.trim(),
+      )
     ) {
       setErrorMessage(
         'أدخل الاسم ورقم هاتف مصري صحيح يبدأ بـ 01.',
@@ -737,8 +848,12 @@ export const App: React.FC = () => {
       return;
     }
 
-    if (roleSelection === 'requester') {
-      const age = Number(patientAge);
+    if (
+      roleSelection === 'requester'
+    ) {
+      const age = Number(
+        patientAge,
+      );
 
       if (
         !Number.isInteger(age) ||
@@ -753,7 +868,8 @@ export const App: React.FC = () => {
 
       if (
         !patientCondition.trim() ||
-        patientCondition.trim().length > 500
+        patientCondition.trim().length >
+          500
       ) {
         setErrorMessage(
           'اكتب وصفًا مختصرًا للحالة الصحية بحد أقصى 500 حرف.',
@@ -765,12 +881,21 @@ export const App: React.FC = () => {
     localStorage.setItem(
       'shahm.pendingProfile',
       JSON.stringify({
-        firstName: firstName.trim(),
-        phone: phone.trim(),
-        role: roleSelection,
-        ...(roleSelection === 'requester'
+        firstName:
+          firstName.trim(),
+
+        phone:
+          phone.trim(),
+
+        role:
+          roleSelection,
+
+        ...(roleSelection ===
+        'requester'
           ? {
-              patientAge: Number(patientAge),
+              patientAge:
+                Number(patientAge),
+
               patientCondition:
                 patientCondition.trim(),
             }
@@ -781,15 +906,21 @@ export const App: React.FC = () => {
     setAuthLoading(true);
 
     const { error } =
-      await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin,
-          queryParams: {
-            prompt: 'select_account',
+      await supabase.auth.signInWithOAuth(
+        {
+          provider: 'google',
+
+          options: {
+            redirectTo:
+              window.location.origin,
+
+            queryParams: {
+              prompt:
+                'select_account',
+            },
           },
         },
-      });
+      );
 
     if (error) {
       setAuthLoading(false);
@@ -810,16 +941,24 @@ export const App: React.FC = () => {
       return;
     }
 
-    const selectedDate = new Date(
-      scheduledAt,
-    );
+    const selectedDate =
+      new Date(scheduledAt);
 
     const now = Date.now();
-    const max = now + 48 * 60 * 60 * 1000;
+
+    const max =
+      now +
+      48 *
+        60 *
+        60 *
+        1000;
 
     if (
-      Number.isNaN(selectedDate.getTime()) ||
-      selectedDate.getTime() <= now ||
+      Number.isNaN(
+        selectedDate.getTime(),
+      ) ||
+      selectedDate.getTime() <=
+        now ||
       selectedDate.getTime() > max
     ) {
       setErrorMessage(
@@ -833,43 +972,65 @@ export const App: React.FC = () => {
 
     try {
       const session =
-        (await supabase.auth.getSession()).data
-          .session;
+        (
+          await supabase.auth.getSession()
+        ).data.session;
 
-      if (!session?.access_token) {
+      if (
+        !session?.access_token
+      ) {
         throw new Error(
           'انتهت جلسة الدخول. سجّل الدخول مرة أخرى.',
         );
       }
 
-      const response = await fetch(
-        `${supabaseUrl}/functions/v1/create-trip-proxy`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.access_token}`,
+      const response =
+        await fetch(
+          `${supabaseUrl}/functions/v1/create-trip-proxy`,
+          {
+            method: 'POST',
+
+            headers: {
+              'Content-Type':
+                'application/json',
+
+              Authorization:
+                `Bearer ${session.access_token}`,
+            },
+
+            body: JSON.stringify({
+              origin_area_label:
+                origin.areaLabel,
+
+              origin_address:
+                origin.fullAddress,
+
+              origin_lat:
+                origin.lat,
+
+              origin_lng:
+                origin.lng,
+
+              destination_area_label:
+                dest.areaLabel,
+
+              destination_address:
+                dest.fullAddress,
+
+              destination_lat:
+                dest.lat,
+
+              destination_lng:
+                dest.lng,
+
+              requester_relation:
+                relation,
+
+              scheduled_at:
+                selectedDate.toISOString(),
+            }),
           },
-          body: JSON.stringify({
-            origin_area_label:
-              origin.areaLabel,
-            origin_address:
-              origin.fullAddress,
-            origin_lat: origin.lat,
-            origin_lng: origin.lng,
-            destination_area_label:
-              dest.areaLabel,
-            destination_address:
-              dest.fullAddress,
-            destination_lat: dest.lat,
-            destination_lng: dest.lng,
-            requester_relation:
-              relation,
-            scheduled_at:
-              selectedDate.toISOString(),
-          }),
-        },
-      );
+        );
 
       const responseText =
         await response.text();
@@ -880,12 +1041,14 @@ export const App: React.FC = () => {
       } = {};
 
       try {
-        resJson = JSON.parse(
-          responseText,
-        );
+        resJson =
+          JSON.parse(
+            responseText,
+          );
       } catch {
         resJson = {
-          error: responseText,
+          error:
+            responseText,
         };
       }
 
@@ -902,22 +1065,55 @@ export const App: React.FC = () => {
         );
       }
 
-      const { data, error } =
-        await supabase
-          .from('trips')
-          .select(TRIP_PUBLIC_COLUMNS)
-          .eq('id', resJson.trip_id)
-          .single();
+      /*
+       * لا نعتمد على قراءة trips بعد الإنشاء.
+       * نبني الحالة محليًا من البيانات التي أرسلناها،
+       * وبذلك لا نتأثر بقيود RLS على الطلبات المعلقة.
+       */
+      const newTrip: PublicTrip = {
+        id:
+          resJson.trip_id,
 
-      if (error) {
-        throw error;
-      }
+        requester_id:
+          profile?.id ||
+          session.user.id,
 
-      if (data) {
-        setActiveRequesterTrip(
-          data as unknown as PublicTrip,
-        );
-      }
+        volunteer_id:
+          null,
+
+        origin_area_label:
+          origin.areaLabel,
+
+        destination_area_label:
+          dest.areaLabel,
+
+        status:
+          'pending',
+
+        requester_relation:
+          relation,
+
+        scheduled_at:
+          selectedDate.toISOString(),
+
+        created_at:
+          new Date().toISOString(),
+
+        accepted_at:
+          null,
+
+        completed_at:
+          null,
+      };
+
+      setActiveRequesterTrip(
+        newTrip,
+      );
+
+      setScheduledAt('');
+      setOrigin(null);
+      setDest(null);
+      setAckChecked(false);
     } catch (err: any) {
       setErrorMessage(
         err?.message ||
@@ -937,22 +1133,36 @@ export const App: React.FC = () => {
       );
 
       requestVolunteerLocation();
+
       return;
     }
 
-    setAcceptingTripId(tripId);
+    setAcceptingTripId(
+      tripId,
+    );
+
     setErrorMessage(null);
 
-    const { data, error } =
-      await supabase.rpc('accept_trip', {
-        p_trip_id: tripId,
+    const {
+      data,
+      error,
+    } = await supabase.rpc(
+      'accept_trip',
+      {
+        p_trip_id:
+          tripId,
+
         p_volunteer_lat:
           volunteerLocation.lat,
+
         p_volunteer_lng:
           volunteerLocation.lng,
-      });
+      },
+    );
 
-    setAcceptingTripId(null);
+    setAcceptingTripId(
+      null,
+    );
 
     if (error) {
       if (
@@ -960,31 +1170,44 @@ export const App: React.FC = () => {
           'تم قبول هذا الطلب من متطوع آخر',
         )
       ) {
-        setRaceConditionDetected(true);
+        setRaceConditionDetected(
+          true,
+        );
       } else {
         setErrorMessage(
           error.message,
         );
       }
 
-      setSelectedTripDetails(null);
+      setSelectedTripDetails(
+        null,
+      );
 
-      await loadNearbyTrips();
+      await loadNearbyTrips(
+        volunteerLocation,
+      );
 
       return;
     }
 
-    if (data && data.length > 0) {
+    if (
+      data &&
+      data.length > 0
+    ) {
       setActiveVolunteerTripData(
-        data[0],
+        data[0] as ContactCardData,
       );
 
-      setSelectedTripDetails(null);
+      setSelectedTripDetails(
+        null,
+      );
 
-      setPendingTrips((prev) =>
-        prev.filter(
-          (trip) => trip.id !== tripId,
-        ),
+      setPendingTrips(
+        (prev) =>
+          prev.filter(
+            (trip) =>
+              trip.id !== tripId,
+          ),
       );
     }
   };
@@ -996,14 +1219,19 @@ export const App: React.FC = () => {
       await supabase.rpc(
         'cancel_trip',
         {
-          p_trip_id: tripId,
+          p_trip_id:
+            tripId,
         },
       );
 
     if (!error) {
-      setActiveRequesterTrip(null);
+      setActiveRequesterTrip(
+        null,
+      );
     } else {
-      setErrorMessage(error.message);
+      setErrorMessage(
+        error.message,
+      );
     }
   };
 
@@ -1014,21 +1242,30 @@ export const App: React.FC = () => {
       await supabase.rpc(
         'complete_trip',
         {
-          p_trip_id: tripId,
+          p_trip_id:
+            tripId,
         },
       );
 
     if (!error) {
-      setActiveRequesterTrip(null);
-      setActiveVolunteerTripData(null);
+      setActiveRequesterTrip(
+        null,
+      );
+
+      setActiveVolunteerTripData(
+        null,
+      );
     } else {
-      setErrorMessage(error.message);
+      setErrorMessage(
+        error.message,
+      );
     }
   };
 
   if (
     sessionLoading ||
-    (sessionUser && profileLoading)
+    (sessionUser &&
+      profileLoading)
   ) {
     return (
       <div className="min-h-screen bg-[#F7F8F9] flex items-center justify-center p-4 text-[#6B7280]">
@@ -1037,13 +1274,17 @@ export const App: React.FC = () => {
           role="status"
         >
           <Loader2 className="w-5 h-5 animate-spin text-[#146B44]" />
+
           جاري تحميل الحساب...
         </div>
       </div>
     );
   }
 
-  if (sessionUser && profileError) {
+  if (
+    sessionUser &&
+    profileError
+  ) {
     return (
       <div className="min-h-screen bg-[#F7F8F9] flex items-center justify-center p-4 text-center">
         <div className="w-full max-w-sm bg-white p-6 rounded-2xl border border-[#FCEAEA] space-y-3">
@@ -1058,7 +1299,9 @@ export const App: React.FC = () => {
           </p>
 
           <button
-            onClick={handleSignOut}
+            onClick={
+              handleSignOut
+            }
             className="text-xs text-[#146B44] font-bold"
           >
             تسجيل الخروج
@@ -1088,7 +1331,9 @@ export const App: React.FC = () => {
         </p>
 
         <button
-          onClick={handleSignOut}
+          onClick={
+            handleSignOut
+          }
           className="text-xs text-[#146B44] font-bold"
         >
           تسجيل الخروج
@@ -1168,14 +1413,18 @@ export const App: React.FC = () => {
           {errorMessage && (
             <div className="p-3 mb-4 bg-[#FCEAEA] text-[#B53A3A] text-xs rounded-xl flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{errorMessage}</span>
+
+              <span>
+                {errorMessage}
+              </span>
             </div>
           )}
 
           <form
             onSubmit={(event) => {
               event.preventDefault();
-              handleGoogleLogin();
+
+              void handleGoogleLogin();
             }}
             className="space-y-4"
           >
@@ -1270,8 +1519,8 @@ export const App: React.FC = () => {
 
             <button
               type="button"
-              onClick={
-                handleGoogleLogin
+              onClick={() =>
+                void handleGoogleLogin()
               }
               disabled={authLoading}
               className="w-full h-[52px] bg-white border border-[#8A949E] text-[#1F2430] font-semibold rounded-xl text-base hover:bg-[#F7F8F9] transition-colors flex items-center justify-center gap-2"
@@ -1319,7 +1568,9 @@ export const App: React.FC = () => {
       'ops_admin',
       'super_admin',
       'analytics_viewer',
-    ].includes(profile?.role)
+    ].includes(
+      profile?.role,
+    )
   ) {
     return (
       <div className="min-h-screen bg-[#F7F8F9] flex items-center justify-center p-4 text-center">
@@ -1335,7 +1586,9 @@ export const App: React.FC = () => {
           </p>
 
           <button
-            onClick={handleSignOut}
+            onClick={
+              handleSignOut
+            }
             className="text-xs text-[#146B44] font-bold"
           >
             تسجيل الخروج
@@ -1380,7 +1633,9 @@ export const App: React.FC = () => {
             )}
 
             <button
-              onClick={handleSignOut}
+              onClick={
+                handleSignOut
+              }
               className="text-xs text-[#6B7280] hover:text-[#1F2430]"
             >
               تسجيل الخروج
@@ -1395,7 +1650,8 @@ export const App: React.FC = () => {
                 setAdminTab('trips')
               }
               className={`px-3 py-1 text-xs rounded-lg font-semibold flex items-center gap-1 ${
-                adminTab === 'trips'
+                adminTab ===
+                'trips'
                   ? 'bg-[#146B44] text-white'
                   : 'bg-[#F7F8F9] text-[#6B7280]'
               }`}
@@ -1408,7 +1664,8 @@ export const App: React.FC = () => {
                 setAdminTab('safety')
               }
               className={`px-3 py-1 text-xs rounded-lg font-semibold flex items-center gap-1 ${
-                adminTab === 'safety'
+                adminTab ===
+                'safety'
                   ? 'bg-[#146B44] text-white'
                   : 'bg-[#F7F8F9] text-[#6B7280]'
               }`}
@@ -1422,7 +1679,8 @@ export const App: React.FC = () => {
                 setAdminTab('analytics')
               }
               className={`px-3 py-1 text-xs rounded-lg font-semibold flex items-center gap-1 ${
-                adminTab === 'analytics'
+                adminTab ===
+                'analytics'
                   ? 'bg-[#146B44] text-white'
                   : 'bg-[#F7F8F9] text-[#6B7280]'
               }`}
@@ -1436,7 +1694,8 @@ export const App: React.FC = () => {
                 setAdminTab('usage')
               }
               className={`px-3 py-1 text-xs rounded-lg font-semibold flex items-center gap-1 ${
-                adminTab === 'usage'
+                adminTab ===
+                'usage'
                   ? 'bg-[#146B44] text-white'
                   : 'bg-[#F7F8F9] text-[#6B7280]'
               }`}
@@ -1450,17 +1709,20 @@ export const App: React.FC = () => {
 
       <main className="flex-1 max-w-2xl w-full mx-auto p-4 space-y-4">
         {isAdmin &&
-          adminTab === 'safety' && (
+          adminTab ===
+            'safety' && (
             <SafetyPanel />
           )}
 
         {isAdmin &&
-          adminTab === 'analytics' && (
+          adminTab ===
+            'analytics' && (
             <AnalyticsDashboard />
           )}
 
         {isAdmin &&
-          adminTab === 'usage' && (
+          adminTab ===
+            'usage' && (
             <UsageMonitor />
           )}
 
@@ -1469,6 +1731,7 @@ export const App: React.FC = () => {
             {reportSuccess && (
               <div className="p-3 bg-[#E6F4ED] text-[#146B44] text-xs rounded-xl flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 shrink-0" />
+
                 <span>
                   تم استلام ملاحظتك بسرية تامة وسيتم مراجعتها
                   من قبل المشرفين.
@@ -1519,7 +1782,7 @@ export const App: React.FC = () => {
 
                     <button
                       onClick={() =>
-                        handleCancelTrip(
+                        void handleCancelTrip(
                           activeRequesterTrip.id,
                         )
                       }
@@ -1551,7 +1814,7 @@ export const App: React.FC = () => {
 
                     <button
                       onClick={() =>
-                        handleCompleteTrip(
+                        void handleCompleteTrip(
                           activeRequesterTrip.id,
                         )
                       }
@@ -1562,7 +1825,9 @@ export const App: React.FC = () => {
 
                     <button
                       onClick={() =>
-                        setReportModalOpen(true)
+                        setReportModalOpen(
+                          true,
+                        )
                       }
                       className="text-xs text-[#6B7280] hover:text-[#B53A3A] flex items-center justify-center gap-1 mx-auto mt-2"
                     >
@@ -1581,7 +1846,10 @@ export const App: React.FC = () => {
                 {errorMessage && (
                   <div className="p-3 bg-[#FCEAEA] text-[#B53A3A] text-xs rounded-xl flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 shrink-0" />
-                    <span>{errorMessage}</span>
+
+                    <span>
+                      {errorMessage}
+                    </span>
                   </div>
                 )}
 
@@ -1609,8 +1877,12 @@ export const App: React.FC = () => {
                   <input
                     type="datetime-local"
                     required
-                    min={dateTimeLimits.min}
-                    max={dateTimeLimits.max}
+                    min={
+                      dateTimeLimits.min
+                    }
+                    max={
+                      dateTimeLimits.max
+                    }
                     value={scheduledAt}
                     onChange={(e) =>
                       setScheduledAt(
@@ -1644,25 +1916,31 @@ export const App: React.FC = () => {
                         id: 'companion',
                         label: 'مرافقة شخص',
                       },
-                    ].map((item) => (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() =>
-                          setRelation(
-                            item.id as RequesterRelation,
-                          )
-                        }
-                        className={`h-10 text-xs font-semibold rounded-lg border transition-colors ${
-                          relation ===
-                          item.id
-                            ? 'border-[#146B44] bg-[#E6F4ED] text-[#146B44]'
-                            : 'border-[#8A949E] bg-white text-[#1F2430]'
-                        }`}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
+                    ].map(
+                      (item) => (
+                        <button
+                          key={
+                            item.id
+                          }
+                          type="button"
+                          onClick={() =>
+                            setRelation(
+                              item.id as RequesterRelation,
+                            )
+                          }
+                          className={`h-10 text-xs font-semibold rounded-lg border transition-colors ${
+                            relation ===
+                            item.id
+                              ? 'border-[#146B44] bg-[#E6F4ED] text-[#146B44]'
+                              : 'border-[#8A949E] bg-white text-[#1F2430]'
+                          }`}
+                        >
+                          {
+                            item.label
+                          }
+                        </button>
+                      ),
+                    )}
                   </div>
                 </div>
 
@@ -1670,7 +1948,9 @@ export const App: React.FC = () => {
                   <label className="flex items-start gap-2 cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={ackChecked}
+                      checked={
+                        ackChecked
+                      }
                       onChange={(e) =>
                         setAckChecked(
                           e.target.checked,
@@ -1695,7 +1975,9 @@ export const App: React.FC = () => {
                     !ackChecked ||
                     createTripLoading
                   }
-                  onClick={handleCreateTrip}
+                  onClick={() =>
+                    void handleCreateTrip()
+                  }
                   className="w-full h-[52px] bg-[#146B44] disabled:opacity-40 active:bg-[#0F5636] text-white font-semibold rounded-xl text-base transition-colors flex items-center justify-center gap-2"
                 >
                   {createTripLoading ? (
@@ -1800,7 +2082,9 @@ export const App: React.FC = () => {
                     activeVolunteerTripData.distance_km,
                   ) && (
                     <div>
-                      <strong>المسافة من موقعك وقت القبول:</strong>{' '}
+                      <strong>
+                        المسافة من موقعك وقت القبول:
+                      </strong>{' '}
                       {formatDistance(
                         activeVolunteerTripData.distance_km,
                       )}
@@ -1842,7 +2126,7 @@ export const App: React.FC = () => {
 
                 <button
                   onClick={() =>
-                    handleCompleteTrip(
+                    void handleCompleteTrip(
                       activeVolunteerTripData.trip_id,
                     )
                   }
@@ -1853,7 +2137,9 @@ export const App: React.FC = () => {
 
                 <button
                   onClick={() =>
-                    setReportModalOpen(true)
+                    setReportModalOpen(
+                      true,
+                    )
                   }
                   className="text-xs text-[#6B7280] hover:text-[#B53A3A] flex items-center justify-center gap-1 mx-auto"
                 >
@@ -1900,6 +2186,7 @@ export const App: React.FC = () => {
                               : ''
                           }`}
                         />
+
                         تحديث
                       </button>
                     </div>
@@ -1926,14 +2213,20 @@ export const App: React.FC = () => {
                   {locationError && (
                     <div className="p-3 bg-[#FCEAEA] text-[#B53A3A] text-xs rounded-xl flex gap-2">
                       <AlertCircle className="w-4 h-4 shrink-0" />
-                      <span>{locationError}</span>
+
+                      <span>
+                        {locationError}
+                      </span>
                     </div>
                   )}
 
                   {errorMessage && (
                     <div className="p-3 bg-[#FCEAEA] text-[#B53A3A] text-xs rounded-xl flex items-center gap-2">
                       <AlertCircle className="w-4 h-4 shrink-0" />
-                      <span>{errorMessage}</span>
+
+                      <span>
+                        {errorMessage}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -1984,7 +2277,9 @@ export const App: React.FC = () => {
                   pendingTrips.map(
                     (trip) => (
                       <div
-                        key={trip.id}
+                        key={
+                          trip.id
+                        }
                         onClick={() =>
                           setSelectedTripDetails(
                             trip,
@@ -2111,6 +2406,27 @@ export const App: React.FC = () => {
                         منك
                       </div>
                     )}
+
+                    {selectedTripDetails.patient_age !==
+                      undefined &&
+                      selectedTripDetails.patient_age !==
+                        null && (
+                        <div>
+                          <strong>عمر المريض:</strong>{' '}
+                          {
+                            selectedTripDetails.patient_age
+                          } سنة
+                        </div>
+                      )}
+
+                    {selectedTripDetails.patient_condition && (
+                      <div>
+                        <strong>الحالة:</strong>{' '}
+                        {
+                          selectedTripDetails.patient_condition
+                        }
+                      </div>
+                    )}
                   </div>
 
                   <div className="p-3 bg-[#E6F4ED] rounded-xl text-xs text-[#146B44] flex items-center gap-2">
@@ -2140,7 +2456,7 @@ export const App: React.FC = () => {
                       !volunteerLocation
                     }
                     onClick={() =>
-                      handleAcceptTrip(
+                      void handleAcceptTrip(
                         selectedTripDetails.id,
                       )
                     }
@@ -2164,12 +2480,18 @@ export const App: React.FC = () => {
             activeVolunteerTripData?.trip_id ||
             activeRequesterTrip?.id
           }
-          isOpen={reportModalOpen}
+          isOpen={
+            reportModalOpen
+          }
           onClose={() =>
-            setReportModalOpen(false)
+            setReportModalOpen(
+              false,
+            )
           }
           onSuccess={() =>
-            setReportSuccess(true)
+            setReportSuccess(
+              true,
+            )
           }
         />
       </main>
