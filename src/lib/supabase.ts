@@ -4,8 +4,6 @@ export const supabaseUrl = 'https://giojwpngkxddnuhqqvnt.supabase.co';
 export const hasSupabaseConfig = Boolean(import.meta.env.VITE_SUPABASE_ANON_KEY);
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'missing-anon-key';
 
-// The linked project currently exposes an empty public schema in generated types.
-// Keep runtime access untyped until the approved migrations are applied remotely.
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export type UserRole =
@@ -16,43 +14,81 @@ export type UserRole =
   | 'analytics_viewer'
   | 'super_admin';
 
-export type TripStatus = 'pending' | 'accepted' | 'completed' | 'cancelled';
-export type RequesterRelation = 'patient' | 'guardian' | 'companion';
+export type TripStatus =
+  | 'pending'
+  | 'accepted'
+  | 'completed'
+  | 'cancelled';
+
+export type RequesterRelation =
+  | 'patient'
+  | 'guardian'
+  | 'companion';
 
 export interface Profile {
   id: string;
   first_name: string;
   phone_number: string;
   role: UserRole;
-  verification_status: 'unverified' | 'pending_review' | 'verified' | 'rejected';
+  verification_status:
+    | 'unverified'
+    | 'pending_review'
+    | 'verified'
+    | 'rejected';
   is_active: boolean;
   created_at: string;
+
+  // Patient information
+  patient_age?: number | null;
+  patient_condition?: string | null;
 }
 
 export interface PublicTrip {
   id: string;
   requester_id: string;
-  volunteer_id?: string;
+  volunteer_id?: string | null;
+
   origin_area_label: string;
   destination_area_label: string;
+
   status: TripStatus;
   requester_relation: RequesterRelation;
+
+  scheduled_at: string;
   created_at: string;
-  accepted_at?: string;
-  completed_at?: string;
+
+  accepted_at?: string | null;
+  completed_at?: string | null;
+
+  // Returned by get_pending_trips_nearby()
+  distance_km?: number | null;
+
+  // Returned for authorized trip views
+  patient_age?: number | null;
+  patient_condition?: string | null;
 }
 
 export interface ContactCardData {
   trip_id: string;
+
   requester_first_name: string;
   requester_phone: string;
   requester_relation: RequesterRelation;
+
+  patient_age?: number | null;
+  patient_condition?: string | null;
+
+  scheduled_at: string;
+
   origin_address: string;
   origin_lat: number;
   origin_lng: number;
+
   destination_address: string;
   destination_lat: number;
   destination_lng: number;
+
+  distance_km?: number | null;
 }
 
 export interface Report {
