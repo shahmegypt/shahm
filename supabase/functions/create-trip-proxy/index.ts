@@ -107,6 +107,44 @@ const validatePayload = (
   );
 };
 
+// Fire-and-forget notification to nearby volunteers. Never allowed to
+// fail or slow down trip creation itself — the trip already exists in the
+// database by the time this runs, so a push failure here is a lost
+// notification, not a lost trip.
+const notifyVolunteers = async (
+  supabaseUrl: string,
+  serviceRoleKey: string,
+  tripId: string,
+  data: CreateTripPayload,
+) => {
+  try {
+    const scheduledLabel =
+      Date.parse(data.scheduled_at) - Date.now() < 10 * 60 * 1000
+        ? 'الآن'
+        : new Date(data.scheduled_at).toLocaleString('ar-EG', {
+            weekday: 'long',
+            hour: '2-digit',
+            minute: '2-digit',
+          });
+
+    await fetch(`${supabaseUrl}/functions/v1/send-push`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${serviceRoleKey}`,
+      },
+      body: JSON.stringify({
+        trip_id: tripId,
+        title: 'طلب رحلة جديد قريب منك',
+        body: `${data.origin_area_label.trim()} ⟶ ${data.destination_area_label.trim()} · ${scheduledLabel}`,
+        url: '/',
+      }),
+    });
+  } catch (pushError) {
+    console.error('notifyVolunteers failed', pushError);
+  }
+};
+
 Deno.serve(async (request) => {
   if (!isAllowedOrigin(request)) {
     return response(request, 403, {
@@ -261,7 +299,14 @@ Deno.serve(async (request) => {
     });
   }
 
+  // Trip already exists at this point — don't let a push failure turn a
+  // successful request into an error for the requester.
+  await notifyVolunteers(supabaseUrl, supabaseServiceRoleKey, tripId as string, data);
+
   return response(request, 201, {
     trip_id: tripId,
   });
-});
+});🚌 جروب توصيل المدارس -
+6 أكتوبر
+ (لأولياء الأمور والكباتن)
+https://chat.whatsapp.com/DA2ffYWwfQU32vBJAF3fjA?s=cl&p=a&ilr=0
