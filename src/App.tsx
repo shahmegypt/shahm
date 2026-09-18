@@ -16,6 +16,7 @@ import { AnalyticsDashboard } from './components/admin/AnalyticsDashboard';
 import { UsageMonitor } from './components/admin/UsageMonitor';
 import { toWhatsAppNumber } from './lib/phone';
 import { useInstallPrompt } from './lib/useInstallPrompt';
+import { registerPushNotifications } from './lib/push';
 import {
   Phone,
   MessageSquare,
@@ -35,6 +36,8 @@ import {
   Download,
   LocateFixed,
   RefreshCw,
+  Bell,
+  BellRing,
 } from 'lucide-react';
 
 type InstallNoticeProps = {
@@ -266,6 +269,10 @@ export const App: React.FC = () => {
   const [locationError, setLocationError] =
     useState<string | null>(null);
 
+  const [pushLoading, setPushLoading] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushError, setPushError] = useState<string | null>(null);
+
   const [loadingNearbyTrips, setLoadingNearbyTrips] =
     useState(false);
 
@@ -479,6 +486,30 @@ export const App: React.FC = () => {
     } finally {
       setProfileLoading(false);
       setSessionLoading(false);
+    }
+  };
+
+  const handleEnablePushNotifications = async () => {
+    if (pushLoading || pushEnabled) return;
+
+    setPushError(null);
+    setPushLoading(true);
+
+    try {
+      const enabled = await registerPushNotifications();
+
+      if (enabled) {
+        setPushEnabled(true);
+      } else {
+        setPushError(
+          'لم يتم تفعيل الإشعارات. اسمح بالإشعارات من إعدادات المتصفح ثم حاول مرة أخرى.',
+        );
+      }
+    } catch (error) {
+      console.error('Enable push notifications failed:', error);
+      setPushError('تعذر تفعيل الإشعارات. حاول مرة أخرى.');
+    } finally {
+      setPushLoading(false);
     }
   };
 
@@ -2165,8 +2196,9 @@ export const App: React.FC = () => {
                     <LocateFixed className="w-5 h-5 text-[#146B44]" />
                   </div>
 
-                  {volunteerLocation ? (
-                    <div className="flex items-center justify-between bg-[#E6F4ED] rounded-xl px-3 py-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {volunteerLocation ? (
+                      <div className="flex items-center justify-between bg-[#E6F4ED] rounded-xl px-3 py-2">
                       <span className="text-[11px] text-[#146B44] font-semibold">
                         تم تحديد موقعك
                       </span>
@@ -2191,25 +2223,49 @@ export const App: React.FC = () => {
                         تحديث
                       </button>
                     </div>
-                  ) : (
-                    <button
-                      onClick={
-                        requestVolunteerLocation
-                      }
-                      disabled={
-                        locationLoading
-                      }
-                      className="w-full h-11 bg-[#146B44] text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2"
-                    >
-                      {locationLoading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <LocateFixed className="w-4 h-4" />
-                      )}
+                    ) : (
+                      <button
+                        onClick={
+                          requestVolunteerLocation
+                        }
+                        disabled={
+                          locationLoading
+                        }
+                        className="w-full h-11 bg-[#146B44] text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2"
+                      >
+                        {locationLoading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <LocateFixed className="w-4 h-4" />
+                        )}
 
-                      تحديد موقعي وعرض الطلبات القريبة
-                    </button>
-                  )}
+                        تحديد موقعي وعرض الطلبات القريبة
+                      </button>
+                    )}
+
+                    {profile?.role === 'volunteer' && (
+                      <button
+                        type="button"
+                        onClick={() => void handleEnablePushNotifications()}
+                        disabled={pushLoading || pushEnabled}
+                        className={`w-full h-11 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 border transition-colors ${
+                          pushEnabled
+                            ? 'bg-[#E6F4ED] border-[#146B44]/20 text-[#146B44]'
+                            : 'bg-white border-[#146B44] text-[#146B44] hover:bg-[#F7F8F9]'
+                        }`}
+                      >
+                        {pushLoading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : pushEnabled ? (
+                          <BellRing className="w-4 h-4" />
+                        ) : (
+                          <Bell className="w-4 h-4" />
+                        )}
+
+                        {pushEnabled ? 'الإشعارات مفعّلة' : 'تفعيل الإشعارات'}
+                      </button>
+                    )}
+                  </div>
 
                   {locationError && (
                     <div className="p-3 bg-[#FCEAEA] text-[#B53A3A] text-xs rounded-xl flex gap-2">
@@ -2218,6 +2274,13 @@ export const App: React.FC = () => {
                       <span>
                         {locationError}
                       </span>
+                    </div>
+                  )}
+
+                  {pushError && (
+                    <div className="p-3 bg-[#FCEAEA] text-[#B53A3A] text-xs rounded-xl flex gap-2">
+                      <Bell className="w-4 h-4 shrink-0" />
+                      <span>{pushError}</span>
                     </div>
                   )}
 
