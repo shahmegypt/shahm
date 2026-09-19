@@ -3,6 +3,7 @@
 // the service-role key may invoke it — it's meant to be triggered from
 // create-trip-proxy right after a trip is successfully created, never
 // directly from the browser.
+// New-trip notifications go only to active volunteers near the pick-up point.
 
 type PushPayload = {
   user_ids?: string[];
@@ -17,6 +18,10 @@ type StoredSubscription = {
   endpoint: string;
   keys: { p256dh: string; auth: string };
 };
+
+// Notification targeting for new trips (see get_nearby_volunteer_ids).
+const NEARBY_RADIUS_KM = 20;
+const LOCATION_MAX_AGE_MINUTES = 180;
 
 const jsonResponse = (status: number, body: Record<string, unknown>) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -67,16 +72,26 @@ Deno.serve(async (request) => {
   let targetUserIds = payload.user_ids ?? [];
 
   if (payload.trip_id && targetUserIds.length === 0) {
-    const { data: volunteers, error: volunteersError } = await serviceClient
-      .from('profiles')
-      .select('id')
-      .eq('role', 'volunteer')
-      .eq('is_active', true);
+    // Only ACTIVE volunteers whose last known position is within 20 km of the
+    // trip's pick-up point and was reported in the last 3 hours.
+    const { data: nearby, error: nearbyError } = await serviceClient.rpc(
+      'get_nearby_volunteer_ids',
+      {
+        p_trip_id: payload.trip_id,
+        p_radius_km: NEARBY_RADIUS_KM,
+        p_max_age_minutes: LOCATION_MAX_AGE_MINUTES,
+      },
+    );
 
-    if (volunteersError) {
-      return jsonResponse(500, { error: 'Could not resolve volunteer list' });
+    if (nearbyError) {
+      console.error('get_nearby_volunteer_ids failed', {
+        code: nearbyError.code,
+        message: nearbyError.message,
+      });
+      return jsonResponse(500, { error: 'Could not resolve nearby volunteers' });
     }
-    targetUserIds = (volunteers ?? []).map((v: { id: string }) => v.id);
+
+    targetUserIds = (nearby ?? []).map((row: { user_id: string }) => row.user_id);
   }
 
   if (targetUserIds.length === 0) {
