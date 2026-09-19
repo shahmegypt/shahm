@@ -1,17 +1,11 @@
--- Lets the requester see their assigned volunteer's contact info once a
--- trip is accepted (name, phone number, and when it was accepted so the
--- app can show "قبل X دقيقة"). Mirrors reveal_contact, which already
--- gives the volunteer the requester's info — this is the missing
--- reciprocal direction.
--- Apply locally first and review against the linked project before any
--- remote deployment.
-
+-- التعديل: إرجاع المسافة distance_km لطالب الرحلة
 create or replace function public.reveal_volunteer_contact(p_trip_id uuid)
 returns table (
   trip_id uuid,
   volunteer_first_name text,
   volunteer_phone text,
-  accepted_at timestamptz
+  accepted_at timestamptz,
+  distance_km numeric
 )
 language sql
 security definer
@@ -21,7 +15,24 @@ as $$
     t.id,
     p.first_name,
     p.phone_number,
-    t.accepted_at
+    t.accepted_at,
+    case
+      when t.volunteer_accepted_lat is not null 
+       and t.volunteer_accepted_lng is not null 
+       and t.origin_lat is not null 
+       and t.origin_lng is not null 
+      then
+        round(
+          (
+            6371 * acos(
+              cos(radians(t.origin_lat)) * cos(radians(t.volunteer_accepted_lat)) *
+              cos(radians(t.volunteer_accepted_lng) - radians(t.origin_lng)) +
+              sin(radians(t.origin_lat)) * sin(radians(t.volunteer_accepted_lat))
+            )
+          )::numeric, 2
+        )
+      else null
+    end as distance_km
   from trips t
   join profiles p on p.id = t.volunteer_id
   where t.id = p_trip_id
