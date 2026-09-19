@@ -1,4 +1,3 @@
--- التعديل: إرجاع المسافة distance_km لطالب الرحلة
 create or replace function public.reveal_volunteer_contact(p_trip_id uuid)
 returns table (
   trip_id uuid,
@@ -8,6 +7,7 @@ returns table (
   distance_km numeric
 )
 language sql
+stable
 security definer
 set search_path = public
 as $$
@@ -25,9 +25,11 @@ as $$
         round(
           (
             6371 * acos(
-              cos(radians(t.origin_lat)) * cos(radians(t.volunteer_accepted_lat)) *
-              cos(radians(t.volunteer_accepted_lng) - radians(t.origin_lng)) +
-              sin(radians(t.origin_lat)) * sin(radians(t.volunteer_accepted_lat))
+              least(1.0, greatest(-1.0,
+                cos(radians(t.origin_lat)) * cos(radians(t.volunteer_accepted_lat)) *
+                cos(radians(t.volunteer_accepted_lng) - radians(t.origin_lng)) +
+                sin(radians(t.origin_lat)) * sin(radians(t.volunteer_accepted_lat))
+              ))
             )
           )::numeric, 2
         )
