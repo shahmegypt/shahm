@@ -208,7 +208,7 @@ export const App: React.FC = () => {
   const [roleSelection, setRoleSelection] =
     useState<UserRole | null>(null);
 
-  const [adminTab, setAdminTab] = useState
+  const [adminTab, setAdminTab] = useState<
     'trips' | 'safety' | 'analytics' | 'usage'
   >('trips');
 
@@ -293,8 +293,6 @@ export const App: React.FC = () => {
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushError, setPushError] = useState<string | null>(null);
 
-  // Volunteer's contact info, revealed to the requester once their trip
-  // is accepted (mirrors activeVolunteerTripData, but for the other side).
   const [volunteerContactData, setVolunteerContactData] = useState<{
     trip_id: string;
     volunteer_first_name: string;
@@ -302,7 +300,6 @@ export const App: React.FC = () => {
     accepted_at: string | null;
   } | null>(null);
 
-  // Settings panel — available to every role to edit their own profile.
   const [showSettings, setShowSettings] = useState(false);
   const [settingsFirstName, setSettingsFirstName] = useState('');
   const [settingsPhone, setSettingsPhone] = useState('');
@@ -557,20 +554,12 @@ export const App: React.FC = () => {
     }
   };
 
-  // Reflect the browser's actual permission state on load, so a user who
-  // already granted (or previously denied) notifications doesn't see a
-  // stale "not enabled" state after a refresh or on another screen.
   useEffect(() => {
     if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
       setPushEnabled(true);
     }
   }, []);
 
-  // Ask for notification permission exactly once per device, shortly
-  // after login, for any role — then never again automatically. The
-  // browser's own permission prompt is the only thing shown; there is no
-  // persistent banner. Whether the user allows or dismisses it, a control
-  // to (re)enable notifications remains available afterwards in Settings.
   useEffect(() => {
     if (!profile) return;
     if (typeof Notification === 'undefined') return;
@@ -917,13 +906,6 @@ export const App: React.FC = () => {
       };
     }
 
-    /*
-     * الـ Admin لا يستخدم get_pending_trips_nearby
-     * لأنها مخصصة للـ volunteer فقط.
-     *
-     * نترك شاشة الإدارة تعتمد على صلاحيات RLS الموجودة
-     * في المشروع بدون طلب GPS.
-     */
     if (
       profile.role === 'ops_admin' ||
       profile.role === 'super_admin' ||
@@ -940,12 +922,7 @@ export const App: React.FC = () => {
             schema: 'public',
             table: 'trips',
           },
-          () => {
-            /*
-             * شاشة الإدارة تعالج بياناتها من مكوناتها
-             * الحالية. لا نستدعي RPC الخاص بالمتطوع.
-             */
-          },
+          () => {},
         )
         .subscribe();
 
@@ -1274,11 +1251,6 @@ export const App: React.FC = () => {
         );
       }
 
-      /*
-       * لا نعتمد على قراءة trips بعد الإنشاء.
-       * نبني الحالة محليًا من البيانات التي أرسلناها،
-       * وبذلك لا نتأثر بقيود RLS على الطلبات المعلقة.
-       */
       const newTrip: PublicTrip = {
         id:
           resJson.trip_id,
@@ -1419,9 +1391,6 @@ export const App: React.FC = () => {
           ),
       );
 
-      // Best-effort: let the requester know their trip was accepted.
-      // Never blocks the UI and never surfaces as an error to the
-      // volunteer if it fails — the trip itself already succeeded.
       void (async () => {
         try {
           const session = (await supabase.auth.getSession()).data.session;
@@ -2063,7 +2032,7 @@ export const App: React.FC = () => {
                         </div>
 
                         <div className="grid grid-cols-2 gap-2">
-                          
+                          <a
                             href={`tel:${volunteerContactData.volunteer_phone}`}
                             className="h-11 bg-[#146B44] text-white rounded-xl flex items-center justify-center gap-1 text-xs font-semibold active:bg-[#0F5636]"
                           >
@@ -2071,7 +2040,7 @@ export const App: React.FC = () => {
                             اتصال بالمتطوع
                           </a>
 
-                          
+                          <a
                             href={`https://wa.me/${toWhatsAppNumber(
                               volunteerContactData.volunteer_phone,
                             )}`}
@@ -2127,7 +2096,7 @@ export const App: React.FC = () => {
                   </div>
                 )}
 
-            <LocationPicker
+                <LocationPicker
                   label="هتتحرك منين؟"
                   placeholder="ابحث عن منطقتك أو حيك"
                   onSelect={(val) =>
@@ -2368,7 +2337,7 @@ export const App: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-3 gap-2">
-                  
+                  <a
                     href={`tel:${activeVolunteerTripData.requester_phone}`}
                     className="h-11 bg-[#146B44] text-white rounded-xl flex items-center justify-center gap-1 text-xs font-semibold active:bg-[#0F5636]"
                   >
@@ -2376,7 +2345,7 @@ export const App: React.FC = () => {
                     اتصال
                   </a>
 
-                  
+                  <a
                     href={`https://wa.me/${toWhatsAppNumber(
                       activeVolunteerTripData.requester_phone,
                     )}`}
@@ -2388,7 +2357,7 @@ export const App: React.FC = () => {
                     واتساب
                   </a>
 
-                  
+                  <a
                     href={`https://maps.google.com/?q=${activeVolunteerTripData.origin_lat},${activeVolunteerTripData.origin_lng}`}
                     target="_blank"
                     rel="noreferrer"
@@ -2442,30 +2411,30 @@ export const App: React.FC = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {volunteerLocation ? (
                       <div className="flex items-center justify-between bg-[#E6F4ED] rounded-xl px-3 py-2">
-                      <span className="text-[11px] text-[#146B44] font-semibold">
-                        تم تحديد موقعك
-                      </span>
+                        <span className="text-[11px] text-[#146B44] font-semibold">
+                          تم تحديد موقعك
+                        </span>
 
-                      <button
-                        onClick={
-                          requestVolunteerLocation
-                        }
-                        disabled={
-                          locationLoading
-                        }
-                        className="text-[11px] text-[#146B44] font-semibold flex items-center gap-1"
-                      >
-                        <RefreshCw
-                          className={`w-3.5 h-3.5 ${
+                        <button
+                          onClick={
+                            requestVolunteerLocation
+                          }
+                          disabled={
                             locationLoading
-                              ? 'animate-spin'
-                              : ''
-                          }`}
-                        />
+                          }
+                          className="text-[11px] text-[#146B44] font-semibold flex items-center gap-1"
+                        >
+                          <RefreshCw
+                            className={`w-3.5 h-3.5 ${
+                              locationLoading
+                                ? 'animate-spin'
+                                : ''
+                            }`}
+                          />
 
-                        تحديث
-                      </button>
-                    </div>
+                          تحديث
+                        </button>
+                      </div>
                     ) : (
                       <button
                         onClick={
@@ -2659,95 +2628,24 @@ export const App: React.FC = () => {
                   <div className="space-y-2 text-sm text-[#1F2430]">
                     <div>
                       <strong>من:</strong>{' '}
-                      {
-                        selectedTripDetails.origin_area_label
-                      }{' '}
-                      (منطقة تقريبية)
+                      {selectedTripDetails.origin_area_label}
                     </div>
-
                     <div>
                       <strong>إلى:</strong>{' '}
-                      {
-                        selectedTripDetails.destination_area_label
-                      }
+                      {selectedTripDetails.destination_area_label}
                     </div>
-
                     <div>
                       <strong>الموعد:</strong>{' '}
-                      {formatScheduledAt(
-                        selectedTripDetails.scheduled_at,
-                      )}
+                      {formatScheduledAt(selectedTripDetails.scheduled_at)}
                     </div>
-
-                    {formatDistance(
-                      selectedTripDetails.distance_km,
-                    ) && (
-                      <div>
-                        <strong>المسافة:</strong>{' '}
-                        {formatDistance(
-                          selectedTripDetails.distance_km,
-                        )}{' '}
-                        منك
-                      </div>
-                    )}
-
-                    {selectedTripDetails.patient_age !==
-                      undefined &&
-                      selectedTripDetails.patient_age !==
-                        null && (
-                        <div>
-                          <strong>عمر المريض:</strong>{' '}
-                          {
-                            selectedTripDetails.patient_age
-                          } سنة
-                        </div>
-                      )}
-
-                    {selectedTripDetails.patient_condition && (
-                      <div>
-                        <strong>الحالة:</strong>{' '}
-                        {
-                          selectedTripDetails.patient_condition
-                        }
-                      </div>
-                    )}
                   </div>
-
-                  <div className="p-3 bg-[#E6F4ED] rounded-xl text-xs text-[#146B44] flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 shrink-0" />
-
-                    <span>
-                      العنوان ورقم التواصل والبيانات التفصيلية
-                      ستظهر بعد قبول الطلب فقط.
-                    </span>
-                  </div>
-
-                  {!volunteerLocation && (
-                    <button
-                      onClick={
-                        requestVolunteerLocation
-                      }
-                      className="w-full h-[48px] border border-[#146B44] text-[#146B44] font-semibold rounded-xl text-sm"
-                    >
-                      تحديد موقعي أولاً
-                    </button>
-                  )}
 
                   <button
-                    disabled={
-                      acceptingTripId ===
-                        selectedTripDetails.id ||
-                      !volunteerLocation
-                    }
-                    onClick={() =>
-                      void handleAcceptTrip(
-                        selectedTripDetails.id,
-                      )
-                    }
-                    className="w-full h-[52px] bg-[#146B44] disabled:opacity-40 active:bg-[#0F5636] text-white font-semibold rounded-xl text-base transition-colors flex items-center justify-center gap-2"
+                    disabled={acceptingTripId === selectedTripDetails.id}
+                    onClick={() => void handleAcceptTrip(selectedTripDetails.id)}
+                    className="w-full h-[52px] bg-[#146B44] active:bg-[#0F5636] text-white font-semibold rounded-xl text-base flex items-center justify-center gap-2"
                   >
-                    {acceptingTripId ===
-                    selectedTripDetails.id ? (
+                    {acceptingTripId === selectedTripDetails.id ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
                     ) : (
                       'قبول المشوار'
@@ -2759,41 +2657,24 @@ export const App: React.FC = () => {
           </>
         )}
 
-        <ReportModal
-          tripId={
-            activeVolunteerTripData?.trip_id ||
-            activeRequesterTrip?.id
-          }
-          isOpen={
-            reportModalOpen
-          }
-          onClose={() =>
-            setReportModalOpen(
-              false,
-            )
-          }
-          onSuccess={() =>
-            setReportSuccess(
-              true,
-            )
-          }
-        />
-
         {showSettings && (
           <div
-            className="fixed inset-0 z-50 bg-black/40 flex flex-col justify-end p-0"
+            className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 animate-fade-in"
             role="dialog"
             aria-modal="true"
+            aria-label="الإعدادات وتعديل البيانات"
           >
-            <div className="bg-white rounded-t-3xl p-6 space-y-4 max-w-md mx-auto w-full max-h-[85vh] overflow-y-auto">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-bold text-[#1F2430]">الإعدادات</h3>
+            <div className="bg-white rounded-2xl max-w-md w-full p-6 text-right shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center border-b border-[#8A949E]/20 pb-3">
+                <h3 className="text-lg font-bold text-[#1F2430]">
+                  تعديل بيانات الحساب
+                </h3>
+
                 <button
                   onClick={() => setShowSettings(false)}
-                  className="text-[#6B7280]"
-                  aria-label="إغلاق"
+                  className="text-[#6B7280] hover:text-[#1F2430]"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
@@ -2807,112 +2688,143 @@ export const App: React.FC = () => {
               {settingsSuccess && (
                 <div className="p-3 bg-[#E6F4ED] text-[#146B44] text-xs rounded-xl flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 shrink-0" />
-                  <span>تم حفظ بياناتك بنجاح.</span>
+                  <span>تم حفظ البيانات بنجاح.</span>
                 </div>
               )}
 
-              <div>
-                <label className="block text-sm font-semibold text-[#1F2430] mb-1">
-                  الاسم الأول
-                </label>
-                <input
-                  type="text"
-                  value={settingsFirstName}
-                  onChange={(e) => setSettingsFirstName(e.target.value)}
-                  className="w-full h-[48px] px-4 bg-white border border-[#8A949E] rounded-xl text-base text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-[#1F2430] mb-1">
-                  رقم الجوال
-                </label>
-                <input
-                  type="tel"
-                  value={settingsPhone}
-                  onChange={(e) => setSettingsPhone(e.target.value)}
-                  placeholder="01XXXXXXXXX"
-                  className="w-full h-[48px] px-4 bg-white border border-[#8A949E] rounded-xl text-base text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
-                />
-              </div>
-
-              {profile?.role === 'requester' && (
-                <>
-                  <div>
-                    <label className="block text-sm font-semibold text-[#1F2430] mb-1">
-                      عمر المريض
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      max={120}
-                      value={settingsPatientAge}
-                      onChange={(e) => setSettingsPatientAge(e.target.value)}
-                      className="w-full h-[48px] px-4 bg-white border border-[#8A949E] rounded-xl text-base text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-[#1F2430] mb-1">
-                      وصف مختصر للحالة الصحية
-                    </label>
-                    <textarea
-                      maxLength={500}
-                      rows={3}
-                      value={settingsPatientCondition}
-                      onChange={(e) => setSettingsPatientCondition(e.target.value)}
-                      className="w-full px-4 py-3 bg-white border border-[#8A949E] rounded-xl text-sm text-[#1F2430] focus:border-[#2F6FED] focus:outline-none resize-none"
-                    />
-                  </div>
-                </>
-              )}
-
-              <div className="pt-2 border-t border-[#8A949E]/10">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-semibold text-[#1F2430]">الإشعارات</span>
-                  <span className="text-[11px] text-[#6B7280]">
-                    {pushEnabled ? 'مفعّلة على هذا الجهاز' : 'غير مفعّلة'}
-                  </span>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-[#1F2430] mb-1">
+                    الاسم الأول
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={settingsFirstName}
+                    onChange={(e) => setSettingsFirstName(e.target.value)}
+                    className="w-full h-11 px-3 bg-white border border-[#8A949E] rounded-xl text-sm text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
+                  />
                 </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[#1F2430] mb-1">
+                    رقم الجوال
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    value={settingsPhone}
+                    onChange={(e) => setSettingsPhone(e.target.value)}
+                    placeholder="01XXXXXXXXX"
+                    className="w-full h-11 px-3 bg-white border border-[#8A949E] rounded-xl text-sm text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
+                  />
+                </div>
+
+                {profile?.role === 'requester' && (
+                  <>
+                    <div>
+                      <label className="block text-xs font-semibold text-[#1F2430] mb-1">
+                        عمر المريض
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        max={120}
+                        value={settingsPatientAge}
+                        onChange={(e) => setSettingsPatientAge(e.target.value)}
+                        className="w-full h-11 px-3 bg-[#FFFFFF] border border-[#8A949E] rounded-xl text-sm text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-[#1F2430] mb-1">
+                        وصف الحالة الصحية
+                      </label>
+                      <textarea
+                        maxLength={500}
+                        rows={3}
+                        value={settingsPatientCondition}
+                        onChange={(e) => setSettingsPatientCondition(e.target.value)}
+                        className="w-full p-3 bg-white border border-[#8A949E] rounded-xl text-sm text-[#1F2430] focus:border-[#2F6FED] focus:outline-none resize-none"
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div className="pt-2 border-t border-[#8A949E]/20 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-[#1F2430]">الإشعارات الفورية</span>
+                    <span className="text-[#6B7280]">
+                      {pushEnabled ? 'مفعلة ✓' : 'غير مفعلة'}
+                    </span>
+                  </div>
+
+                  {!pushEnabled && (
+                    <button
+                      type="button"
+                      onClick={() => void handleEnablePushNotifications()}
+                      disabled={pushLoading}
+                      className="w-full h-10 bg-[#E6F4ED] text-[#146B44] text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5"
+                    >
+                      {pushLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <BellRing className="w-4 h-4" />
+                      )}
+                      تفعيل الإشعارات
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  disabled={settingsSaving}
+                  onClick={() => void handleSaveSettings()}
+                  className="flex-1 h-11 bg-[#146B44] text-white text-sm font-semibold rounded-xl flex items-center justify-center gap-2"
+                >
+                  {settingsSaving ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    'حفظ التغييرات'
+                  )}
+                </button>
 
                 <button
                   type="button"
-                  onClick={() => void handleEnablePushNotifications()}
-                  disabled={pushLoading || pushEnabled}
-                  className={`w-full h-11 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 border transition-colors ${
-                    pushEnabled
-                      ? 'bg-[#E6F4ED] border-[#146B44]/20 text-[#146B44]'
-                      : 'bg-white border-[#146B44] text-[#146B44] hover:bg-[#F7F8F9]'
-                  }`}
+                  onClick={() => setShowSettings(false)}
+                  className="px-4 h-11 border border-[#8A949E] text-[#6B7280] text-sm font-semibold rounded-xl"
                 >
-                  {pushLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : pushEnabled ? (
-                    <BellRing className="w-4 h-4" />
-                  ) : (
-                    <Bell className="w-4 h-4" />
-                  )}
-                  {pushEnabled ? 'الإشعارات مفعّلة' : 'تفعيل الإشعارات'}
+                  إلغاء
                 </button>
-
-                {pushError && (
-                  <p className="text-xs text-[#B53A3A] mt-2">{pushError}</p>
-                )}
               </div>
-
-              <button
-                onClick={() => void handleSaveSettings()}
-                disabled={settingsSaving}
-                className="w-full h-[52px] bg-[#146B44] disabled:opacity-40 active:bg-[#0F5636] text-white font-semibold rounded-xl text-base transition-colors flex items-center justify-center gap-2"
-              >
-                {settingsSaving ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  'حفظ التعديلات'
-                )}
-              </button>
             </div>
           </div>
+        )}
+
+        {reportModalOpen && activeRequesterTrip && (
+          <ReportModal
+            tripId={activeRequesterTrip.id}
+            reportedUserId={activeRequesterTrip.volunteer_id}
+            onClose={() => setReportModalOpen(false)}
+            onSuccess={() => {
+              setReportModalOpen(false);
+              setReportSuccess(true);
+            }}
+          />
+        )}
+
+        {reportModalOpen && activeVolunteerTripData && (
+          <ReportModal
+            tripId={activeVolunteerTripData.trip_id}
+            reportedUserId={null}
+            onClose={() => setReportModalOpen(false)}
+            onSuccess={() => {
+              setReportModalOpen(false);
+              setReportSuccess(true);
+            }}
+          />
         )}
       </main>
     </div>
