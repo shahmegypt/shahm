@@ -208,7 +208,7 @@ export const App: React.FC = () => {
   const [roleSelection, setRoleSelection] =
     useState<UserRole | null>(null);
 
-  const [adminTab, setAdminTab] = useState<
+  const [adminTab, setAdminTab] = useState
     'trips' | 'safety' | 'analytics' | 'usage'
   >('trips');
 
@@ -1979,4 +1979,944 @@ export const App: React.FC = () => {
 
             {activeRequesterTrip ? (
               <div className="bg-white p-6 rounded-2xl border border-[#8A949E]/20 text-center space-y-4">
-            
+                {activeRequesterTrip.status ===
+                'pending' ? (
+                  <>
+                    <div className="w-16 h-16 mx-auto bg-[#FBEFDC] rounded-full flex items-center justify-center">
+                      <Clock className="w-8 h-8 text-[#8F5A0A] animate-pulse" />
+                    </div>
+
+                    <h3 className="text-lg font-bold text-[#1F2430]">
+                      جارٍ البحث عن متطوع قريب...
+                    </h3>
+
+                    <p className="text-xs text-[#6B7280]">
+                      طلبك معروض للمتطوعين الموجودين ضمن
+                      النطاق الجغرافي المحدد
+                    </p>
+
+                    <div className="p-3 bg-[#F7F8F9] rounded-xl text-xs text-right space-y-2">
+                      <div>
+                        <strong>من:</strong>{' '}
+                        {
+                          activeRequesterTrip.origin_area_label
+                        }
+                      </div>
+
+                      <div>
+                        <strong>إلى:</strong>{' '}
+                        {
+                          activeRequesterTrip.destination_area_label
+                        }
+                      </div>
+
+                      <div>
+                        <strong>الموعد:</strong>{' '}
+                        {formatScheduledAt(
+                          activeRequesterTrip.scheduled_at,
+                        )}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() =>
+                        void handleCancelTrip(
+                          activeRequesterTrip.id,
+                        )
+                      }
+                      className="w-full h-[48px] bg-[#FCEAEA] text-[#B53A3A] font-semibold rounded-xl text-sm hover:bg-[#B53A3A] hover:text-white transition-colors"
+                    >
+                      إلغاء الطلب
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-16 h-16 mx-auto bg-[#E6F4ED] rounded-full flex items-center justify-center">
+                      <CheckCircle2 className="w-8 h-8 text-[#146B44]" />
+                    </div>
+
+                    <h3 className="text-lg font-bold text-[#1F2430]">
+                      تم قبول طلبك!
+                    </h3>
+
+                    <p className="text-xs text-[#6B7280]">
+                      أحد المتطوعين قبل طلب النقل الخاص بك.
+                    </p>
+
+                    <div className="p-3 bg-[#F7F8F9] rounded-xl text-xs text-right">
+                      <strong>الموعد:</strong>{' '}
+                      {formatScheduledAt(
+                        activeRequesterTrip.scheduled_at,
+                      )}
+                    </div>
+
+                    {volunteerContactData && (
+                      <div className="p-3 bg-[#E6F4ED] rounded-xl text-right space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-bold text-[#1F2430]">
+                            {volunteerContactData.volunteer_first_name}
+                          </span>
+                          <span className="text-[11px] text-[#146B44] font-semibold">
+                            {formatTimeSince(volunteerContactData.accepted_at) &&
+                              `قبل طلبك ${formatTimeSince(volunteerContactData.accepted_at)}`}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          
+                            href={`tel:${volunteerContactData.volunteer_phone}`}
+                            className="h-11 bg-[#146B44] text-white rounded-xl flex items-center justify-center gap-1 text-xs font-semibold active:bg-[#0F5636]"
+                          >
+                            <Phone className="w-4 h-4" />
+                            اتصال بالمتطوع
+                          </a>
+
+                          
+                            href={`https://wa.me/${toWhatsAppNumber(
+                              volunteerContactData.volunteer_phone,
+                            )}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="h-11 bg-[#1E8E5A] text-white rounded-xl flex items-center justify-center gap-1 text-xs font-semibold active:bg-[#0F5636]"
+                          >
+                            <MessageSquare className="w-4 h-4" />
+                            واتساب
+                          </a>
+                        </div>
+                      </div>
+                    )}
+
+                    <button
+                      onClick={() =>
+                        void handleCompleteTrip(
+                          activeRequesterTrip.id,
+                        )
+                      }
+                      className="w-full h-[52px] bg-[#146B44] text-white font-semibold rounded-xl text-base"
+                    >
+                      تم الوصول بأمان ✓
+                    </button>
+
+                    <button
+                      onClick={() =>
+                        setReportModalOpen(
+                          true,
+                        )
+                      }
+                      className="text-xs text-[#6B7280] hover:text-[#B53A3A] flex items-center justify-center gap-1 mx-auto mt-2"
+                    >
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                      إبلاغ عن مشكلة في المشوار
+                    </button>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="bg-white p-6 rounded-2xl border border-[#8A949E]/20 space-y-4">
+                <h2 className="text-lg font-bold text-[#1F2430]">
+                  طلب نقل لموعد طبي
+                </h2>
+
+                {errorMessage && (
+                  <div className="p-3 bg-[#FCEAEA] text-[#B53A3A] text-xs rounded-xl flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+
+                    <span>
+                      {errorMessage}
+                    </span>
+                  </div>
+                )}
+
+            <LocationPicker
+                  label="هتتحرك منين؟"
+                  placeholder="ابحث عن منطقتك أو حيك"
+                  onSelect={(val) =>
+                    setOrigin(val)
+                  }
+                  allowCurrentLocation
+                />
+
+                <LocationPicker
+                  label="هتروح فين؟"
+                  placeholder="اسم المستشفى أو المركز الطبي"
+                  onSelect={(val) =>
+                    setDest(val)
+                  }
+                />
+
+                <div>
+                  <label className="block text-sm font-semibold text-[#1F2430] mb-2">
+                    موعد المشوار
+                  </label>
+
+                  <input
+                    type="datetime-local"
+                    required
+                    min={
+                      dateTimeLimits.min
+                    }
+                    max={
+                      dateTimeLimits.max
+                    }
+                    value={scheduledAt}
+                    onChange={(e) =>
+                      setScheduledAt(
+                        e.target.value,
+                      )
+                    }
+                    className="w-full h-[52px] px-4 bg-white border border-[#8A949E] rounded-xl text-base text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
+                  />
+
+                  <p className="text-[10px] text-[#6B7280] mt-1">
+                    يمكن اختيار موعد خلال الـ 48 ساعة القادمة فقط.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-[#1F2430] mb-2">
+                    الطلب ده لـ:
+                  </label>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      {
+                        id: 'patient',
+                        label: 'أنا',
+                      },
+                      {
+                        id: 'guardian',
+                        label: 'شخص تحت رعايتي',
+                      },
+                      {
+                        id: 'companion',
+                        label: 'مرافقة شخص',
+                      },
+                    ].map(
+                      (item) => (
+                        <button
+                          key={
+                            item.id
+                          }
+                          type="button"
+                          onClick={() =>
+                            setRelation(
+                              item.id as RequesterRelation,
+                            )
+                          }
+                          className={`h-10 text-xs font-semibold rounded-lg border transition-colors ${
+                            relation ===
+                            item.id
+                              ? 'border-[#146B44] bg-[#E6F4ED] text-[#146B44]'
+                              : 'border-[#8A949E] bg-white text-[#1F2430]'
+                          }`}
+                        >
+                          {
+                            item.label
+                          }
+                        </button>
+                      ),
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-3 bg-[#F7F8F9] rounded-xl border border-[#8A949E]/30 space-y-2">
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={
+                        ackChecked
+                      }
+                      onChange={(e) =>
+                        setAckChecked(
+                          e.target.checked,
+                        )
+                      }
+                      className="mt-1 accent-[#146B44] w-4 h-4"
+                    />
+
+                    <span className="text-xs text-[#1F2430] leading-relaxed">
+                      أقر بأن هذا الطلب لحالة علاجية حقيقية،
+                      وأتحمل المسؤولية الكاملة عن دقة البيانات
+                      المُدخلة.
+                    </span>
+                  </label>
+                </div>
+
+                <button
+                  disabled={
+                    !origin ||
+                    !dest ||
+                    !scheduledAt ||
+                    !ackChecked ||
+                    createTripLoading
+                  }
+                  onClick={() =>
+                    void handleCreateTrip()
+                  }
+                  className="w-full h-[52px] bg-[#146B44] disabled:opacity-40 active:bg-[#0F5636] text-white font-semibold rounded-xl text-base transition-colors flex items-center justify-center gap-2"
+                >
+                  {createTripLoading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    'إرسال الطلب'
+                  )}
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
+        {showVolunteerView && (
+          <>
+            {raceConditionDetected && (
+              <RaceConditionToast
+                onClose={() =>
+                  setRaceConditionDetected(
+                    false,
+                  )
+                }
+              />
+            )}
+
+            {activeVolunteerTripData ? (
+              <div className="bg-white p-6 rounded-2xl border border-[#8A949E]/20 shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs bg-[#E6F4ED] text-[#146B44] px-3 py-1 rounded-full font-semibold">
+                    تم قبول المشوار بنجاح
+                  </span>
+
+                  <ShieldCheck className="w-5 h-5 text-[#146B44]" />
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-[#1F2430]">
+                    {
+                      activeVolunteerTripData.requester_first_name
+                    }
+                  </h3>
+
+                  <p className="text-xs text-[#6B7280]">
+                    {activeVolunteerTripData.requester_relation ===
+                      'patient' &&
+                      'مريض'}
+
+                    {activeVolunteerTripData.requester_relation ===
+                      'guardian' &&
+                      'ولي أمر'}
+
+                    {activeVolunteerTripData.requester_relation ===
+                      'companion' &&
+                      'مرافق'}
+                  </p>
+                </div>
+
+                <div className="p-3 bg-[#F7F8F9] rounded-xl text-xs space-y-2 text-right">
+                  <div>
+                    <strong>موعد المشوار:</strong>{' '}
+                    {formatScheduledAt(
+                      activeVolunteerTripData.scheduled_at,
+                    )}
+                  </div>
+
+                  {activeVolunteerTripData.patient_age !==
+                    undefined &&
+                    activeVolunteerTripData.patient_age !==
+                      null && (
+                      <div>
+                        <strong>عمر المريض:</strong>{' '}
+                        {
+                          activeVolunteerTripData.patient_age
+                        } سنة
+                      </div>
+                    )}
+
+                  {activeVolunteerTripData.patient_condition && (
+                    <div>
+                      <strong>الحالة:</strong>{' '}
+                      {
+                        activeVolunteerTripData.patient_condition
+                      }
+                    </div>
+                  )}
+
+                  <div>
+                    <strong>نقطة الانطلاق:</strong>{' '}
+                    {
+                      activeVolunteerTripData.origin_address
+                    }
+                  </div>
+
+                  <div>
+                    <strong>الوجهة:</strong>{' '}
+                    {
+                      activeVolunteerTripData.destination_address
+                    }
+                  </div>
+
+                  {formatDistance(
+                    activeVolunteerTripData.distance_km,
+                  ) && (
+                    <div>
+                      <strong>
+                        المسافة من موقعك وقت القبول:
+                      </strong>{' '}
+                      {formatDistance(
+                        activeVolunteerTripData.distance_km,
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  
+                    href={`tel:${activeVolunteerTripData.requester_phone}`}
+                    className="h-11 bg-[#146B44] text-white rounded-xl flex items-center justify-center gap-1 text-xs font-semibold active:bg-[#0F5636]"
+                  >
+                    <Phone className="w-4 h-4" />
+                    اتصال
+                  </a>
+
+                  
+                    href={`https://wa.me/${toWhatsAppNumber(
+                      activeVolunteerTripData.requester_phone,
+                    )}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="h-11 bg-[#1E8E5A] text-white rounded-xl flex items-center justify-center gap-1 text-xs font-semibold active:bg-[#0F5636]"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    واتساب
+                  </a>
+
+                  
+                    href={`https://maps.google.com/?q=${activeVolunteerTripData.origin_lat},${activeVolunteerTripData.origin_lng}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="h-11 bg-[#2F6FED] text-white rounded-xl flex items-center justify-center gap-1 text-xs font-semibold"
+                  >
+                    <Map className="w-4 h-4" />
+                    الخرائط
+                  </a>
+                </div>
+
+                <button
+                  onClick={() =>
+                    void handleCompleteTrip(
+                      activeVolunteerTripData.trip_id,
+                    )
+                  }
+                  className="w-full h-[52px] bg-[#146B44] text-white font-semibold rounded-xl text-base active:bg-[#0F5636] transition-colors"
+                >
+                  ✓ تم إيصاله بأمان
+                </button>
+
+                <button
+                  onClick={() =>
+                    setReportModalOpen(
+                      true,
+                    )
+                  }
+                  className="text-xs text-[#6B7280] hover:text-[#B53A3A] flex items-center justify-center gap-1 mx-auto"
+                >
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  إبلاغ عن مشكلة
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="bg-white p-4 rounded-2xl border border-[#8A949E]/20 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-base font-bold text-[#1F2430]">
+                        الطلبات المتاحة قربك
+                      </h2>
+
+                      <p className="text-[11px] text-[#6B7280] mt-1">
+                        تظهر فقط الطلبات الموجودة ضمن 20 كم من موقعك.
+                      </p>
+                    </div>
+
+                    <LocateFixed className="w-5 h-5 text-[#146B44]" />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {volunteerLocation ? (
+                      <div className="flex items-center justify-between bg-[#E6F4ED] rounded-xl px-3 py-2">
+                      <span className="text-[11px] text-[#146B44] font-semibold">
+                        تم تحديد موقعك
+                      </span>
+
+                      <button
+                        onClick={
+                          requestVolunteerLocation
+                        }
+                        disabled={
+                          locationLoading
+                        }
+                        className="text-[11px] text-[#146B44] font-semibold flex items-center gap-1"
+                      >
+                        <RefreshCw
+                          className={`w-3.5 h-3.5 ${
+                            locationLoading
+                              ? 'animate-spin'
+                              : ''
+                          }`}
+                        />
+
+                        تحديث
+                      </button>
+                    </div>
+                    ) : (
+                      <button
+                        onClick={
+                          requestVolunteerLocation
+                        }
+                        disabled={
+                          locationLoading
+                        }
+                        className="w-full h-11 bg-[#146B44] text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2"
+                      >
+                        {locationLoading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <LocateFixed className="w-4 h-4" />
+                        )}
+
+                        تحديد موقعي وعرض الطلبات القريبة
+                      </button>
+                    )}
+                  </div>
+
+                  {locationError && (
+                    <div className="p-3 bg-[#FCEAEA] text-[#B53A3A] text-xs rounded-xl flex gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+
+                      <span>
+                        {locationError}
+                      </span>
+                    </div>
+                  )}
+
+                  {pushError && (
+                    <div className="p-3 bg-[#FCEAEA] text-[#B53A3A] text-xs rounded-xl flex gap-2">
+                      <Bell className="w-4 h-4 shrink-0" />
+                      <span>{pushError}</span>
+                    </div>
+                  )}
+
+                  {errorMessage && (
+                    <div className="p-3 bg-[#FCEAEA] text-[#B53A3A] text-xs rounded-xl flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+
+                      <span>
+                        {errorMessage}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <h2 className="text-base font-bold text-[#1F2430] flex items-center justify-between">
+                  <span>
+                    الطلبات المتاحة
+                  </span>
+
+                  <span className="text-xs font-normal text-[#6B7280]">
+                    ({pendingTrips.length})
+                  </span>
+                </h2>
+
+                {loadingNearbyTrips ? (
+                  <div className="bg-white p-8 rounded-2xl border border-[#8A949E]/20 text-center">
+                    <Loader2 className="w-8 h-8 text-[#146B44] mx-auto animate-spin" />
+
+                    <p className="text-xs text-[#6B7280] mt-3">
+                      بنبحث عن الطلبات القريبة...
+                    </p>
+                  </div>
+                ) : !volunteerLocation ? (
+                  <div className="bg-white p-8 rounded-2xl border border-[#8A949E]/20 text-center space-y-2">
+                    <LocateFixed className="w-8 h-8 text-[#8A949E] mx-auto" />
+
+                    <p className="text-sm font-semibold text-[#1F2430]">
+                      حدد موقعك أولًا
+                    </p>
+
+                    <p className="text-xs text-[#6B7280]">
+                      لن يتم عرض الطلبات إلا بعد تحديد موقعك.
+                    </p>
+                  </div>
+                ) : pendingTrips.length === 0 ? (
+                  <div className="bg-white p-8 rounded-2xl border border-[#8A949E]/20 text-center space-y-2">
+                    <Clock className="w-8 h-8 text-[#8A949E] mx-auto" />
+
+                    <p className="text-sm font-semibold text-[#1F2430]">
+                      مفيش طلبات قريبة منك دلوقتي
+                    </p>
+
+                    <p className="text-xs text-[#6B7280]">
+                      هنظهر لك الطلبات الجديدة الموجودة ضمن 20 كم.
+                    </p>
+                  </div>
+                ) : (
+                  pendingTrips.map(
+                    (trip) => (
+                      <div
+                        key={
+                          trip.id
+                        }
+                        onClick={() =>
+                          setSelectedTripDetails(
+                            trip,
+                          )
+                        }
+                        className="bg-white p-4 rounded-2xl border border-[#8A949E]/20 shadow-sm cursor-pointer hover:border-[#146B44] transition-all space-y-2"
+                      >
+                        <div className="flex items-center justify-between text-xs text-[#6B7280]">
+                          <span className="bg-[#FBEFDC] text-[#8F5A0A] px-2 py-0.5 rounded-md font-medium">
+                            {trip.requester_relation ===
+                              'patient' &&
+                              'مريض'}
+
+                            {trip.requester_relation ===
+                              'guardian' &&
+                              'ولي أمر'}
+
+                            {trip.requester_relation ===
+                              'companion' &&
+                              'مرافق'}
+                          </span>
+
+                          <span>
+                            {formatScheduledAt(
+                              trip.scheduled_at,
+                            )}
+                          </span>
+                        </div>
+
+                        <div className="text-sm font-bold text-[#1F2430] flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-[#146B44] shrink-0" />
+
+                          <span>
+                            {
+                              trip.origin_area_label
+                            }
+                          </span>
+
+                          <span className="text-[#6B7280]">
+                            ⟶
+                          </span>
+
+                          <span>
+                            {
+                              trip.destination_area_label
+                            }
+                          </span>
+                        </div>
+
+                        {formatDistance(
+                          trip.distance_km,
+                        ) && (
+                          <div className="text-xs text-[#146B44] font-semibold flex items-center gap-1">
+                            <LocateFixed className="w-3.5 h-3.5" />
+
+                            {formatDistance(
+                              trip.distance_km,
+                            )}{' '}
+                            منك
+                          </div>
+                        )}
+                      </div>
+                    ),
+                  )
+                )}
+              </div>
+            )}
+
+            {selectedTripDetails && (
+              <div
+                className="fixed inset-0 z-50 bg-black/40 flex flex-col justify-end p-0"
+                role="dialog"
+                aria-modal="true"
+              >
+                <div className="bg-white rounded-t-3xl p-6 space-y-4 max-w-md mx-auto w-full">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-bold text-[#1F2430]">
+                      تفاصيل المشوار
+                    </h3>
+
+                    <button
+                      onClick={() =>
+                        setSelectedTripDetails(
+                          null,
+                        )
+                      }
+                      className="text-[#6B7280]"
+                    >
+                      <X className="w-6 h-6" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-2 text-sm text-[#1F2430]">
+                    <div>
+                      <strong>من:</strong>{' '}
+                      {
+                        selectedTripDetails.origin_area_label
+                      }{' '}
+                      (منطقة تقريبية)
+                    </div>
+
+                    <div>
+                      <strong>إلى:</strong>{' '}
+                      {
+                        selectedTripDetails.destination_area_label
+                      }
+                    </div>
+
+                    <div>
+                      <strong>الموعد:</strong>{' '}
+                      {formatScheduledAt(
+                        selectedTripDetails.scheduled_at,
+                      )}
+                    </div>
+
+                    {formatDistance(
+                      selectedTripDetails.distance_km,
+                    ) && (
+                      <div>
+                        <strong>المسافة:</strong>{' '}
+                        {formatDistance(
+                          selectedTripDetails.distance_km,
+                        )}{' '}
+                        منك
+                      </div>
+                    )}
+
+                    {selectedTripDetails.patient_age !==
+                      undefined &&
+                      selectedTripDetails.patient_age !==
+                        null && (
+                        <div>
+                          <strong>عمر المريض:</strong>{' '}
+                          {
+                            selectedTripDetails.patient_age
+                          } سنة
+                        </div>
+                      )}
+
+                    {selectedTripDetails.patient_condition && (
+                      <div>
+                        <strong>الحالة:</strong>{' '}
+                        {
+                          selectedTripDetails.patient_condition
+                        }
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="p-3 bg-[#E6F4ED] rounded-xl text-xs text-[#146B44] flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 shrink-0" />
+
+                    <span>
+                      العنوان ورقم التواصل والبيانات التفصيلية
+                      ستظهر بعد قبول الطلب فقط.
+                    </span>
+                  </div>
+
+                  {!volunteerLocation && (
+                    <button
+                      onClick={
+                        requestVolunteerLocation
+                      }
+                      className="w-full h-[48px] border border-[#146B44] text-[#146B44] font-semibold rounded-xl text-sm"
+                    >
+                      تحديد موقعي أولاً
+                    </button>
+                  )}
+
+                  <button
+                    disabled={
+                      acceptingTripId ===
+                        selectedTripDetails.id ||
+                      !volunteerLocation
+                    }
+                    onClick={() =>
+                      void handleAcceptTrip(
+                        selectedTripDetails.id,
+                      )
+                    }
+                    className="w-full h-[52px] bg-[#146B44] disabled:opacity-40 active:bg-[#0F5636] text-white font-semibold rounded-xl text-base transition-colors flex items-center justify-center gap-2"
+                  >
+                    {acceptingTripId ===
+                    selectedTripDetails.id ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      'قبول المشوار'
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        <ReportModal
+          tripId={
+            activeVolunteerTripData?.trip_id ||
+            activeRequesterTrip?.id
+          }
+          isOpen={
+            reportModalOpen
+          }
+          onClose={() =>
+            setReportModalOpen(
+              false,
+            )
+          }
+          onSuccess={() =>
+            setReportSuccess(
+              true,
+            )
+          }
+        />
+
+        {showSettings && (
+          <div
+            className="fixed inset-0 z-50 bg-black/40 flex flex-col justify-end p-0"
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="bg-white rounded-t-3xl p-6 space-y-4 max-w-md mx-auto w-full max-h-[85vh] overflow-y-auto">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-bold text-[#1F2430]">الإعدادات</h3>
+                <button
+                  onClick={() => setShowSettings(false)}
+                  className="text-[#6B7280]"
+                  aria-label="إغلاق"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              {settingsError && (
+                <div className="p-3 bg-[#FCEAEA] text-[#B53A3A] text-xs rounded-xl flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{settingsError}</span>
+                </div>
+              )}
+
+              {settingsSuccess && (
+                <div className="p-3 bg-[#E6F4ED] text-[#146B44] text-xs rounded-xl flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span>تم حفظ بياناتك بنجاح.</span>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-semibold text-[#1F2430] mb-1">
+                  الاسم الأول
+                </label>
+                <input
+                  type="text"
+                  value={settingsFirstName}
+                  onChange={(e) => setSettingsFirstName(e.target.value)}
+                  className="w-full h-[48px] px-4 bg-white border border-[#8A949E] rounded-xl text-base text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-[#1F2430] mb-1">
+                  رقم الجوال
+                </label>
+                <input
+                  type="tel"
+                  value={settingsPhone}
+                  onChange={(e) => setSettingsPhone(e.target.value)}
+                  placeholder="01XXXXXXXXX"
+                  className="w-full h-[48px] px-4 bg-white border border-[#8A949E] rounded-xl text-base text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
+                />
+              </div>
+
+              {profile?.role === 'requester' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-semibold text-[#1F2430] mb-1">
+                      عمر المريض
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={120}
+                      value={settingsPatientAge}
+                      onChange={(e) => setSettingsPatientAge(e.target.value)}
+                      className="w-full h-[48px] px-4 bg-white border border-[#8A949E] rounded-xl text-base text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-[#1F2430] mb-1">
+                      وصف مختصر للحالة الصحية
+                    </label>
+                    <textarea
+                      maxLength={500}
+                      rows={3}
+                      value={settingsPatientCondition}
+                      onChange={(e) => setSettingsPatientCondition(e.target.value)}
+                      className="w-full px-4 py-3 bg-white border border-[#8A949E] rounded-xl text-sm text-[#1F2430] focus:border-[#2F6FED] focus:outline-none resize-none"
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="pt-2 border-t border-[#8A949E]/10">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-semibold text-[#1F2430]">الإشعارات</span>
+                  <span className="text-[11px] text-[#6B7280]">
+                    {pushEnabled ? 'مفعّلة على هذا الجهاز' : 'غير مفعّلة'}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => void handleEnablePushNotifications()}
+                  disabled={pushLoading || pushEnabled}
+                  className={`w-full h-11 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 border transition-colors ${
+                    pushEnabled
+                      ? 'bg-[#E6F4ED] border-[#146B44]/20 text-[#146B44]'
+                      : 'bg-white border-[#146B44] text-[#146B44] hover:bg-[#F7F8F9]'
+                  }`}
+                >
+                  {pushLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : pushEnabled ? (
+                    <BellRing className="w-4 h-4" />
+                  ) : (
+                    <Bell className="w-4 h-4" />
+                  )}
+                  {pushEnabled ? 'الإشعارات مفعّلة' : 'تفعيل الإشعارات'}
+                </button>
+
+                {pushError && (
+                  <p className="text-xs text-[#B53A3A] mt-2">{pushError}</p>
+                )}
+              </div>
+
+              <button
+                onClick={() => void handleSaveSettings()}
+                disabled={settingsSaving}
+                className="w-full h-[52px] bg-[#146B44] disabled:opacity-40 active:bg-[#0F5636] text-white font-semibold rounded-xl text-base transition-colors flex items-center justify-center gap-2"
+              >
+                {settingsSaving ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  'حفظ التعديلات'
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+};
+
+export default App;
