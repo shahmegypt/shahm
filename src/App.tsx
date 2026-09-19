@@ -8,6 +8,7 @@ import {
   ContactCardData,
   RequesterRelation,
 } from './lib/supabase';
+import { reportVolunteerLocation } from './lib/volunteerLocation';
 import { LocationPicker } from './components/common/LocationPicker';
 import { ReportModal } from './components/common/ReportModal';
 import { RaceConditionToast } from './components/common/StateViews';
