@@ -1947,7 +1947,7 @@ export const App: React.FC = () => {
                     <div
                       key={trip.id}
                       onClick={() => setSelectedTripDetails(trip)}
-                      className="bg-white p-4 rounded-2xl border border-[#8A949E]/20 shadow-sm cursor-pointer hover:border-[#146B44] transition-all space-y-2"
+                      className="bg-[#FFFFFF] p-4 rounded-2xl border border-[#8A949E]/20 shadow-sm cursor-pointer hover:border-[#146B44] transition-all space-y-2"
                     >
                       <div className="flex items-center justify-between text-xs text-[#6B7280]">
                         <span className="bg-[#FBEFDC] text-[#8F5A0A] px-2 py-0.5 rounded-md font-medium">
@@ -1983,7 +1983,7 @@ export const App: React.FC = () => {
                 role="dialog"
                 aria-modal="true"
               >
-                <div className="bg-white rounded-t-3xl p-6 space-y-4 max-w-md mx-auto w-full">
+                <div className="bg-[#FFFFFF] rounded-t-3xl p-6 space-y-4 max-w-md mx-auto w-full">
                   <div className="flex justify-between items-center">
                     <h3 className="text-lg font-bold text-[#1F2430]">
                       تفاصيل المشوار
@@ -2035,7 +2035,7 @@ export const App: React.FC = () => {
             aria-modal="true"
             aria-label="الإعدادات وتعديل البيانات"
           >
-            <div className="bg-white rounded-2xl max-w-md w-full p-6 text-right shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="bg-[#FFFFFF] rounded-2xl max-w-md w-full p-6 text-right shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center border-b border-[#8A949E]/20 pb-3">
                 <h3 className="text-lg font-bold text-[#1F2430]">
                   تعديل بيانات الحساب
@@ -2072,7 +2072,7 @@ export const App: React.FC = () => {
                     required
                     value={settingsFirstName}
                     onChange={(e) => setSettingsFirstName(e.target.value)}
-                    className="w-full h-11 px-3 bg-white border border-[#8A949E] rounded-xl text-sm text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
+                    className="w-full h-11 px-3 bg-[#FFFFFF] border border-[#8A949E] rounded-xl text-sm text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
                   />
                 </div>
 
@@ -2086,7 +2086,7 @@ export const App: React.FC = () => {
                     value={settingsPhone}
                     onChange={(e) => setSettingsPhone(e.target.value)}
                     placeholder="01XXXXXXXXX"
-                    className="w-full h-11 px-3 bg-white border border-[#8A949E] rounded-xl text-sm text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
+                    className="w-full h-11 px-3 bg-[#FFFFFF] border border-[#8A949E] rounded-xl text-sm text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
                   />
                 </div>
 
@@ -2102,7 +2102,7 @@ export const App: React.FC = () => {
                         max={120}
                         value={settingsPatientAge}
                         onChange={(e) => setSettingsPatientAge(e.target.value)}
-                        className="w-full h-11 px-3 bg-white border border-[#8A949E] rounded-xl text-sm text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
+                        className="w-full h-11 px-3 bg-[#FFFFFF] border border-[#8A949E] rounded-xl text-sm text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
                       />
                     </div>
 
@@ -2117,7 +2117,7 @@ export const App: React.FC = () => {
                         onChange={(e) =>
                           setSettingsPatientCondition(e.target.value)
                         }
-                        className="w-full p-3 bg-white border border-[#8A949E] rounded-xl text-sm text-[#1F2430] focus:border-[#2F6FED] focus:outline-none resize-none"
+                        className="w-full p-3 bg-[#FFFFFF] border border-[#8A949E] rounded-xl text-sm text-[#1F2430] focus:border-[#2F6FED] focus:outline-none resize-none"
                       />
                     </div>
                   </>
