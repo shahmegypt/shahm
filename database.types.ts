@@ -230,6 +230,7 @@ export type Database = {
       trips: {
         Row: {
           accepted_at: string | null
+          accepted_distance_km: number | null
           ack_at: string | null
           ack_ip: unknown
           completed_at: string | null
@@ -246,6 +247,7 @@ export type Database = {
         }
         Insert: {
           accepted_at?: string | null
+          accepted_distance_km?: number | null
           ack_at?: string | null
           ack_ip?: unknown
           completed_at?: string | null
@@ -262,6 +264,7 @@ export type Database = {
         }
         Update: {
           accepted_at?: string | null
+          accepted_distance_km?: number | null
           ack_at?: string | null
           ack_ip?: unknown
           completed_at?: string | null
@@ -346,7 +349,64 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      accept_trip: {
+        Args: {
+          p_trip_id: string
+          p_volunteer_lat: number
+          p_volunteer_lng: number
+        }
+        Returns: {
+          trip_id: string
+          requester_first_name: string
+          requester_phone: string
+          requester_relation: Database["public"]["Enums"]["requester_relation"]
+          patient_age: number | null
+          patient_condition: string | null
+          scheduled_at: string
+          origin_address: string
+          origin_lat: number
+          origin_lng: number
+          destination_address: string
+          destination_lat: number
+          destination_lng: number
+          distance_km: number
+        }[]
+      }
+      get_pending_trips_nearby: {
+        Args: {
+          p_lat: number
+          p_lng: number
+          p_radius_km?: number
+        }
+        Returns: {
+          id: string
+          requester_id: string
+          volunteer_id: string | null
+          origin_area_label: string
+          destination_area_label: string
+          status: Database["public"]["Enums"]["trip_status"]
+          requester_relation: Database["public"]["Enums"]["requester_relation"]
+          patient_age: number | null
+          patient_condition: string | null
+          scheduled_at: string
+          created_at: string
+          accepted_at: string | null
+          completed_at: string | null
+          distance_km: number
+        }[]
+      }
+      reveal_volunteer_contact: {
+        Args: { p_trip_id: string }
+        Returns: {
+          trip_id: string
+          volunteer_first_name: string
+          volunteer_phone: string
+          accepted_at: string | null
+          distance_km: number | null
+        }[]
+      }
+      cancel_trip: { Args: { p_trip_id: string }; Returns: undefined }
+      complete_trip: { Args: { p_trip_id: string }; Returns: undefined }
     }
     Enums: {
       report_status: "pending" | "reviewed" | "dismissed" | "actioned"

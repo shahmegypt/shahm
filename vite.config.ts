@@ -11,7 +11,7 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.ts',
       registerType: 'autoUpdate',
-      includeAssets: ['offline.html', 'favicon.ico', 'apple-touch-icon.png'],
+      includeAssets: ['offline.html', 'pwa-192x192.png', 'pwa-512x512.png'],
       manifest: {
         name: 'شَهْم - نقل الحالات العلاجية',
         short_name: 'شَهْم',
@@ -26,19 +26,19 @@ export default defineConfig({
         dir: 'rtl',
         icons: [
           {
-            src: 'icon-192.png',
+            src: 'pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: 'icon-512.png',
+            src: 'pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: 'icon-512.png',
+            src: 'pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
