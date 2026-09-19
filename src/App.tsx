@@ -38,6 +38,7 @@ import {
   RefreshCw,
   Bell,
   BellRing,
+  Settings,
 } from 'lucide-react';
 
 type InstallNoticeProps = {
@@ -182,6 +183,25 @@ const formatDistance = (distance?: number | null) => {
   return `${numericDistance.toFixed(1)} كم`;
 };
 
+const formatTimeSince = (value?: string | null) => {
+  if (!value) return null;
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+
+  const diffMs = Date.now() - date.getTime();
+  const diffMinutes = Math.max(0, Math.round(diffMs / 60000));
+
+  if (diffMinutes < 1) return 'الآن';
+  if (diffMinutes < 60) return `منذ ${diffMinutes} دقيقة`;
+
+  const diffHours = Math.round(diffMinutes / 60);
+  if (diffHours < 24) return `منذ ${diffHours} ساعة`;
+
+  const diffDays = Math.round(diffHours / 24);
+  return `منذ ${diffDays} يوم`;
+};
+
 export const App: React.FC = () => {
   const [sessionUser, setSessionUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
@@ -272,6 +292,25 @@ export const App: React.FC = () => {
   const [pushLoading, setPushLoading] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushError, setPushError] = useState<string | null>(null);
+
+  // Volunteer's contact info, revealed to the requester once their trip
+  // is accepted (mirrors activeVolunteerTripData, but for the other side).
+  const [volunteerContactData, setVolunteerContactData] = useState<{
+    trip_id: string;
+    volunteer_first_name: string;
+    volunteer_phone: string;
+    accepted_at: string | null;
+  } | null>(null);
+
+  // Settings panel — available to every role to edit their own profile.
+  const [showSettings, setShowSettings] = useState(false);
+  const [settingsFirstName, setSettingsFirstName] = useState('');
+  const [settingsPhone, setSettingsPhone] = useState('');
+  const [settingsPatientAge, setSettingsPatientAge] = useState('');
+  const [settingsPatientCondition, setSettingsPatientCondition] = useState('');
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
+  const [settingsSuccess, setSettingsSuccess] = useState(false);
 
   const [loadingNearbyTrips, setLoadingNearbyTrips] =
     useState(false);
@@ -373,6 +412,11 @@ export const App: React.FC = () => {
       setReportModalOpen(false);
       setReportSuccess(false);
       setAdminTab('trips');
+
+      setVolunteerContactData(null);
+      setShowSettings(false);
+      setSettingsError(null);
+      setSettingsSuccess(false);
     }
   };
 
@@ -512,6 +556,37 @@ export const App: React.FC = () => {
       setPushLoading(false);
     }
   };
+
+  // Reflect the browser's actual permission state on load, so a user who
+  // already granted (or previously denied) notifications doesn't see a
+  // stale "not enabled" state after a refresh or on another screen.
+  useEffect(() => {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      setPushEnabled(true);
+    }
+  }, []);
+
+  // Ask for notification permission exactly once per device, shortly
+  // after login, for any role — then never again automatically. The
+  // browser's own permission prompt is the only thing shown; there is no
+  // persistent banner. Whether the user allows or dismisses it, a control
+  // to (re)enable notifications remains available afterwards in Settings.
+  useEffect(() => {
+    if (!profile) return;
+    if (typeof Notification === 'undefined') return;
+    if (Notification.permission !== 'default') return;
+
+    const alreadyPrompted = localStorage.getItem('shahm.pushPrompted');
+    if (alreadyPrompted) return;
+
+    localStorage.setItem('shahm.pushPrompted', '1');
+
+    const timer = setTimeout(() => {
+      void handleEnablePushNotifications();
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [profile]);
 
   const requestVolunteerLocation = () => {
     setLocationError(null);
@@ -744,37 +819,69 @@ export const App: React.FC = () => {
     if (!profile) return;
 
     if (profile.role === 'requester') {
-      supabase
-        .from('trips')
-        .select(TRIP_PUBLIC_COLUMNS)
-        .in('status', [
-          'pending',
-          'accepted',
-        ])
-        .eq('requester_id', profile.id)
-        .order('created_at', {
-          ascending: false,
-        })
-        .limit(1)
-        .then(({ data, error }) => {
-          if (error) {
-            setErrorMessage(error.message);
-            return;
-          }
+      const fetchActiveRequesterTrip = () => {
+        supabase
+          .from('trips')
+          .select(TRIP_PUBLIC_COLUMNS)
+          .in('status', [
+            'pending',
+            'accepted',
+          ])
+          .eq('requester_id', profile.id)
+          .order('created_at', {
+            ascending: false,
+          })
+          .limit(1)
+          .then(({ data, error }) => {
+            if (error) {
+              setErrorMessage(error.message);
+              return;
+            }
 
-          if (
-            data &&
-            data.length > 0
-          ) {
-            setActiveRequesterTrip(
-              data[0] as unknown as PublicTrip,
-            );
-          } else {
-            setActiveRequesterTrip(null);
-          }
-        });
+            if (
+              data &&
+              data.length > 0
+            ) {
+              const trip = data[0] as unknown as PublicTrip;
+              setActiveRequesterTrip(trip);
 
-      return;
+              if (trip.status === 'accepted') {
+                void supabase
+                  .rpc('reveal_volunteer_contact', { p_trip_id: trip.id })
+                  .then(({ data: contact, error: contactError }) => {
+                    if (!contactError && contact && contact.length > 0) {
+                      setVolunteerContactData(contact[0]);
+                    }
+                  });
+              } else {
+                setVolunteerContactData(null);
+              }
+            } else {
+              setActiveRequesterTrip(null);
+              setVolunteerContactData(null);
+            }
+          });
+      };
+
+      fetchActiveRequesterTrip();
+
+      const requesterChannel = supabase
+        .channel(`trips-requester-realtime-${profile.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'trips',
+            filter: `requester_id=eq.${profile.id}`,
+          },
+          () => fetchActiveRequesterTrip(),
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(requesterChannel);
+      };
     }
 
     if (profile.role === 'volunteer') {
@@ -863,6 +970,77 @@ export const App: React.FC = () => {
     profile?.role,
     volunteerLocation,
   ]);
+
+  const handleOpenSettings = () => {
+    setSettingsFirstName(profile?.first_name ?? '');
+    setSettingsPhone(profile?.phone_number ?? '');
+    setSettingsPatientAge(
+      profile?.patient_age !== null && profile?.patient_age !== undefined
+        ? String(profile.patient_age)
+        : '',
+    );
+    setSettingsPatientCondition(profile?.patient_condition ?? '');
+    setSettingsError(null);
+    setSettingsSuccess(false);
+    setShowSettings(true);
+  };
+
+  const handleSaveSettings = async () => {
+    setSettingsError(null);
+    setSettingsSuccess(false);
+
+    if (
+      !settingsFirstName.trim() ||
+      !/^01\d{9}$/.test(settingsPhone.trim())
+    ) {
+      setSettingsError('أدخل الاسم ورقم هاتف مصري صحيح يبدأ بـ 01.');
+      return;
+    }
+
+    const updates: Record<string, unknown> = {
+      first_name: settingsFirstName.trim(),
+      phone_number: settingsPhone.trim(),
+    };
+
+    if (profile?.role === 'requester') {
+      const age = Number(settingsPatientAge);
+
+      if (!Number.isInteger(age) || age < 0 || age > 120) {
+        setSettingsError('أدخل عمر المريض من 0 إلى 120 سنة.');
+        return;
+      }
+
+      if (
+        !settingsPatientCondition.trim() ||
+        settingsPatientCondition.trim().length > 500
+      ) {
+        setSettingsError('اكتب وصفًا مختصرًا للحالة الصحية بحد أقصى 500 حرف.');
+        return;
+      }
+
+      updates.patient_age = age;
+      updates.patient_condition = settingsPatientCondition.trim();
+    }
+
+    setSettingsSaving(true);
+
+    const { data: updatedProfile, error } = await supabase
+      .from('profiles')
+      .update(updates)
+      .eq('id', profile.id)
+      .select()
+      .single();
+
+    setSettingsSaving(false);
+
+    if (error) {
+      setSettingsError(error.message);
+      return;
+    }
+
+    setProfile(updatedProfile);
+    setSettingsSuccess(true);
+  };
 
   const handleGoogleLogin = async () => {
     setErrorMessage(null);
@@ -1240,6 +1418,27 @@ export const App: React.FC = () => {
               trip.id !== tripId,
           ),
       );
+
+      // Best-effort: let the requester know their trip was accepted.
+      // Never blocks the UI and never surfaces as an error to the
+      // volunteer if it fails — the trip itself already succeeded.
+      void (async () => {
+        try {
+          const session = (await supabase.auth.getSession()).data.session;
+          if (!session?.access_token) return;
+
+          await fetch(`${supabaseUrl}/functions/v1/notify-trip-accepted`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ trip_id: tripId }),
+          });
+        } catch (notifyError) {
+          console.error('notify-trip-accepted failed', notifyError);
+        }
+      })();
     }
   };
 
@@ -1664,6 +1863,14 @@ export const App: React.FC = () => {
             )}
 
             <button
+              onClick={handleOpenSettings}
+              aria-label="الإعدادات"
+              className="text-[#6B7280] hover:text-[#1F2430] p-1"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+
+            <button
               onClick={
                 handleSignOut
               }
@@ -1772,795 +1979,4 @@ export const App: React.FC = () => {
 
             {activeRequesterTrip ? (
               <div className="bg-white p-6 rounded-2xl border border-[#8A949E]/20 text-center space-y-4">
-                {activeRequesterTrip.status ===
-                'pending' ? (
-                  <>
-                    <div className="w-16 h-16 mx-auto bg-[#FBEFDC] rounded-full flex items-center justify-center">
-                      <Clock className="w-8 h-8 text-[#8F5A0A] animate-pulse" />
-                    </div>
-
-                    <h3 className="text-lg font-bold text-[#1F2430]">
-                      جارٍ البحث عن متطوع قريب...
-                    </h3>
-
-                    <p className="text-xs text-[#6B7280]">
-                      طلبك معروض للمتطوعين الموجودين ضمن
-                      النطاق الجغرافي المحدد
-                    </p>
-
-                    <div className="p-3 bg-[#F7F8F9] rounded-xl text-xs text-right space-y-2">
-                      <div>
-                        <strong>من:</strong>{' '}
-                        {
-                          activeRequesterTrip.origin_area_label
-                        }
-                      </div>
-
-                      <div>
-                        <strong>إلى:</strong>{' '}
-                        {
-                          activeRequesterTrip.destination_area_label
-                        }
-                      </div>
-
-                      <div>
-                        <strong>الموعد:</strong>{' '}
-                        {formatScheduledAt(
-                          activeRequesterTrip.scheduled_at,
-                        )}
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() =>
-                        void handleCancelTrip(
-                          activeRequesterTrip.id,
-                        )
-                      }
-                      className="w-full h-[48px] bg-[#FCEAEA] text-[#B53A3A] font-semibold rounded-xl text-sm hover:bg-[#B53A3A] hover:text-white transition-colors"
-                    >
-                      إلغاء الطلب
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <div className="w-16 h-16 mx-auto bg-[#E6F4ED] rounded-full flex items-center justify-center">
-                      <CheckCircle2 className="w-8 h-8 text-[#146B44]" />
-                    </div>
-
-                    <h3 className="text-lg font-bold text-[#1F2430]">
-                      تم قبول طلبك!
-                    </h3>
-
-                    <p className="text-xs text-[#6B7280]">
-                      أحد المتطوعين قبل طلب النقل الخاص بك.
-                    </p>
-
-                    <div className="p-3 bg-[#F7F8F9] rounded-xl text-xs text-right">
-                      <strong>الموعد:</strong>{' '}
-                      {formatScheduledAt(
-                        activeRequesterTrip.scheduled_at,
-                      )}
-                    </div>
-
-                    <button
-                      onClick={() =>
-                        void handleCompleteTrip(
-                          activeRequesterTrip.id,
-                        )
-                      }
-                      className="w-full h-[52px] bg-[#146B44] text-white font-semibold rounded-xl text-base"
-                    >
-                      تم الوصول بأمان ✓
-                    </button>
-
-                    <button
-                      onClick={() =>
-                        setReportModalOpen(
-                          true,
-                        )
-                      }
-                      className="text-xs text-[#6B7280] hover:text-[#B53A3A] flex items-center justify-center gap-1 mx-auto mt-2"
-                    >
-                      <AlertTriangle className="w-3.5 h-3.5" />
-                      إبلاغ عن مشكلة في المشوار
-                    </button>
-                  </>
-                )}
-              </div>
-            ) : (
-              <div className="bg-white p-6 rounded-2xl border border-[#8A949E]/20 space-y-4">
-                <h2 className="text-lg font-bold text-[#1F2430]">
-                  طلب نقل لموعد طبي
-                </h2>
-
-                {errorMessage && (
-                  <div className="p-3 bg-[#FCEAEA] text-[#B53A3A] text-xs rounded-xl flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 shrink-0" />
-
-                    <span>
-                      {errorMessage}
-                    </span>
-                  </div>
-                )}
-
-            <LocationPicker
-                  label="هتتحرك منين؟"
-                  placeholder="ابحث عن منطقتك أو حيك"
-                  onSelect={(val) =>
-                    setOrigin(val)
-                  }
-                  allowCurrentLocation
-                />
-
-                <LocationPicker
-                  label="هتروح فين؟"
-                  placeholder="اسم المستشفى أو المركز الطبي"
-                  onSelect={(val) =>
-                    setDest(val)
-                  }
-                />
-
-                <div>
-                  <label className="block text-sm font-semibold text-[#1F2430] mb-2">
-                    موعد المشوار
-                  </label>
-
-                  <input
-                    type="datetime-local"
-                    required
-                    min={
-                      dateTimeLimits.min
-                    }
-                    max={
-                      dateTimeLimits.max
-                    }
-                    value={scheduledAt}
-                    onChange={(e) =>
-                      setScheduledAt(
-                        e.target.value,
-                      )
-                    }
-                    className="w-full h-[52px] px-4 bg-white border border-[#8A949E] rounded-xl text-base text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
-                  />
-
-                  <p className="text-[10px] text-[#6B7280] mt-1">
-                    يمكن اختيار موعد خلال الـ 48 ساعة القادمة فقط.
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-[#1F2430] mb-2">
-                    الطلب ده لـ:
-                  </label>
-
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      {
-                        id: 'patient',
-                        label: 'أنا',
-                      },
-                      {
-                        id: 'guardian',
-                        label: 'شخص تحت رعايتي',
-                      },
-                      {
-                        id: 'companion',
-                        label: 'مرافقة شخص',
-                      },
-                    ].map(
-                      (item) => (
-                        <button
-                          key={
-                            item.id
-                          }
-                          type="button"
-                          onClick={() =>
-                            setRelation(
-                              item.id as RequesterRelation,
-                            )
-                          }
-                          className={`h-10 text-xs font-semibold rounded-lg border transition-colors ${
-                            relation ===
-                            item.id
-                              ? 'border-[#146B44] bg-[#E6F4ED] text-[#146B44]'
-                              : 'border-[#8A949E] bg-white text-[#1F2430]'
-                          }`}
-                        >
-                          {
-                            item.label
-                          }
-                        </button>
-                      ),
-                    )}
-                  </div>
-                </div>
-
-                <div className="p-3 bg-[#F7F8F9] rounded-xl border border-[#8A949E]/30 space-y-2">
-                  <label className="flex items-start gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={
-                        ackChecked
-                      }
-                      onChange={(e) =>
-                        setAckChecked(
-                          e.target.checked,
-                        )
-                      }
-                      className="mt-1 accent-[#146B44] w-4 h-4"
-                    />
-
-                    <span className="text-xs text-[#1F2430] leading-relaxed">
-                      أقر بأن هذا الطلب لحالة علاجية حقيقية،
-                      وأتحمل المسؤولية الكاملة عن دقة البيانات
-                      المُدخلة.
-                    </span>
-                  </label>
-                </div>
-
-                <button
-                  disabled={
-                    !origin ||
-                    !dest ||
-                    !scheduledAt ||
-                    !ackChecked ||
-                    createTripLoading
-                  }
-                  onClick={() =>
-                    void handleCreateTrip()
-                  }
-                  className="w-full h-[52px] bg-[#146B44] disabled:opacity-40 active:bg-[#0F5636] text-white font-semibold rounded-xl text-base transition-colors flex items-center justify-center gap-2"
-                >
-                  {createTripLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    'إرسال الطلب'
-                  )}
-                </button>
-              </div>
-            )}
-          </>
-        )}
-
-        {showVolunteerView && (
-          <>
-            {raceConditionDetected && (
-              <RaceConditionToast
-                onClose={() =>
-                  setRaceConditionDetected(
-                    false,
-                  )
-                }
-              />
-            )}
-
-            {activeVolunteerTripData ? (
-              <div className="bg-white p-6 rounded-2xl border border-[#8A949E]/20 shadow-sm space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs bg-[#E6F4ED] text-[#146B44] px-3 py-1 rounded-full font-semibold">
-                    تم قبول المشوار بنجاح
-                  </span>
-
-                  <ShieldCheck className="w-5 h-5 text-[#146B44]" />
-                </div>
-
-                <div>
-                  <h3 className="text-xl font-bold text-[#1F2430]">
-                    {
-                      activeVolunteerTripData.requester_first_name
-                    }
-                  </h3>
-
-                  <p className="text-xs text-[#6B7280]">
-                    {activeVolunteerTripData.requester_relation ===
-                      'patient' &&
-                      'مريض'}
-
-                    {activeVolunteerTripData.requester_relation ===
-                      'guardian' &&
-                      'ولي أمر'}
-
-                    {activeVolunteerTripData.requester_relation ===
-                      'companion' &&
-                      'مرافق'}
-                  </p>
-                </div>
-
-                <div className="p-3 bg-[#F7F8F9] rounded-xl text-xs space-y-2 text-right">
-                  <div>
-                    <strong>موعد المشوار:</strong>{' '}
-                    {formatScheduledAt(
-                      activeVolunteerTripData.scheduled_at,
-                    )}
-                  </div>
-
-                  {activeVolunteerTripData.patient_age !==
-                    undefined &&
-                    activeVolunteerTripData.patient_age !==
-                      null && (
-                      <div>
-                        <strong>عمر المريض:</strong>{' '}
-                        {
-                          activeVolunteerTripData.patient_age
-                        } سنة
-                      </div>
-                    )}
-
-                  {activeVolunteerTripData.patient_condition && (
-                    <div>
-                      <strong>الحالة:</strong>{' '}
-                      {
-                        activeVolunteerTripData.patient_condition
-                      }
-                    </div>
-                  )}
-
-                  <div>
-                    <strong>نقطة الانطلاق:</strong>{' '}
-                    {
-                      activeVolunteerTripData.origin_address
-                    }
-                  </div>
-
-                  <div>
-                    <strong>الوجهة:</strong>{' '}
-                    {
-                      activeVolunteerTripData.destination_address
-                    }
-                  </div>
-
-                  {formatDistance(
-                    activeVolunteerTripData.distance_km,
-                  ) && (
-                    <div>
-                      <strong>
-                        المسافة من موقعك وقت القبول:
-                      </strong>{' '}
-                      {formatDistance(
-                        activeVolunteerTripData.distance_km,
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-3 gap-2">
-                  <a
-                    href={`tel:${activeVolunteerTripData.requester_phone}`}
-                    className="h-11 bg-[#146B44] text-white rounded-xl flex items-center justify-center gap-1 text-xs font-semibold active:bg-[#0F5636]"
-                  >
-                    <Phone className="w-4 h-4" />
-                    اتصال
-                  </a>
-
-                  <a
-                    href={`https://wa.me/${toWhatsAppNumber(
-                      activeVolunteerTripData.requester_phone,
-                    )}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="h-11 bg-[#1E8E5A] text-white rounded-xl flex items-center justify-center gap-1 text-xs font-semibold active:bg-[#0F5636]"
-                  >
-                    <MessageSquare className="w-4 h-4" />
-                    واتساب
-                  </a>
-
-                  <a
-                    href={`https://maps.google.com/?q=${activeVolunteerTripData.origin_lat},${activeVolunteerTripData.origin_lng}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="h-11 bg-[#2F6FED] text-white rounded-xl flex items-center justify-center gap-1 text-xs font-semibold"
-                  >
-                    <Map className="w-4 h-4" />
-                    الخرائط
-                  </a>
-                </div>
-
-                <button
-                  onClick={() =>
-                    void handleCompleteTrip(
-                      activeVolunteerTripData.trip_id,
-                    )
-                  }
-                  className="w-full h-[52px] bg-[#146B44] text-white font-semibold rounded-xl text-base active:bg-[#0F5636] transition-colors"
-                >
-                  ✓ تم إيصاله بأمان
-                </button>
-
-                <button
-                  onClick={() =>
-                    setReportModalOpen(
-                      true,
-                    )
-                  }
-                  className="text-xs text-[#6B7280] hover:text-[#B53A3A] flex items-center justify-center gap-1 mx-auto"
-                >
-                  <AlertTriangle className="w-3.5 h-3.5" />
-                  إبلاغ عن مشكلة
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="bg-white p-4 rounded-2xl border border-[#8A949E]/20 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="text-base font-bold text-[#1F2430]">
-                        الطلبات المتاحة قربك
-                      </h2>
-
-                      <p className="text-[11px] text-[#6B7280] mt-1">
-                        تظهر فقط الطلبات الموجودة ضمن 20 كم من موقعك.
-                      </p>
-                    </div>
-
-                    <LocateFixed className="w-5 h-5 text-[#146B44]" />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {volunteerLocation ? (
-                      <div className="flex items-center justify-between bg-[#E6F4ED] rounded-xl px-3 py-2">
-                      <span className="text-[11px] text-[#146B44] font-semibold">
-                        تم تحديد موقعك
-                      </span>
-
-                      <button
-                        onClick={
-                          requestVolunteerLocation
-                        }
-                        disabled={
-                          locationLoading
-                        }
-                        className="text-[11px] text-[#146B44] font-semibold flex items-center gap-1"
-                      >
-                        <RefreshCw
-                          className={`w-3.5 h-3.5 ${
-                            locationLoading
-                              ? 'animate-spin'
-                              : ''
-                          }`}
-                        />
-
-                        تحديث
-                      </button>
-                    </div>
-                    ) : (
-                      <button
-                        onClick={
-                          requestVolunteerLocation
-                        }
-                        disabled={
-                          locationLoading
-                        }
-                        className="w-full h-11 bg-[#146B44] text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2"
-                      >
-                        {locationLoading ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <LocateFixed className="w-4 h-4" />
-                        )}
-
-                        تحديد موقعي وعرض الطلبات القريبة
-                      </button>
-                    )}
-
-                    {profile?.role === 'volunteer' && (
-                      <button
-                        type="button"
-                        onClick={() => void handleEnablePushNotifications()}
-                        disabled={pushLoading || pushEnabled}
-                        className={`w-full h-11 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 border transition-colors ${
-                          pushEnabled
-                            ? 'bg-[#E6F4ED] border-[#146B44]/20 text-[#146B44]'
-                            : 'bg-white border-[#146B44] text-[#146B44] hover:bg-[#F7F8F9]'
-                        }`}
-                      >
-                        {pushLoading ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : pushEnabled ? (
-                          <BellRing className="w-4 h-4" />
-                        ) : (
-                          <Bell className="w-4 h-4" />
-                        )}
-
-                        {pushEnabled ? 'الإشعارات مفعّلة' : 'تفعيل الإشعارات'}
-                      </button>
-                    )}
-                  </div>
-
-                  {locationError && (
-                    <div className="p-3 bg-[#FCEAEA] text-[#B53A3A] text-xs rounded-xl flex gap-2">
-                      <AlertCircle className="w-4 h-4 shrink-0" />
-
-                      <span>
-                        {locationError}
-                      </span>
-                    </div>
-                  )}
-
-                  {pushError && (
-                    <div className="p-3 bg-[#FCEAEA] text-[#B53A3A] text-xs rounded-xl flex gap-2">
-                      <Bell className="w-4 h-4 shrink-0" />
-                      <span>{pushError}</span>
-                    </div>
-                  )}
-
-                  {errorMessage && (
-                    <div className="p-3 bg-[#FCEAEA] text-[#B53A3A] text-xs rounded-xl flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4 shrink-0" />
-
-                      <span>
-                        {errorMessage}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <h2 className="text-base font-bold text-[#1F2430] flex items-center justify-between">
-                  <span>
-                    الطلبات المتاحة
-                  </span>
-
-                  <span className="text-xs font-normal text-[#6B7280]">
-                    ({pendingTrips.length})
-                  </span>
-                </h2>
-
-                {loadingNearbyTrips ? (
-                  <div className="bg-white p-8 rounded-2xl border border-[#8A949E]/20 text-center">
-                    <Loader2 className="w-8 h-8 text-[#146B44] mx-auto animate-spin" />
-
-                    <p className="text-xs text-[#6B7280] mt-3">
-                      بنبحث عن الطلبات القريبة...
-                    </p>
-                  </div>
-                ) : !volunteerLocation ? (
-                  <div className="bg-white p-8 rounded-2xl border border-[#8A949E]/20 text-center space-y-2">
-                    <LocateFixed className="w-8 h-8 text-[#8A949E] mx-auto" />
-
-                    <p className="text-sm font-semibold text-[#1F2430]">
-                      حدد موقعك أولًا
-                    </p>
-
-                    <p className="text-xs text-[#6B7280]">
-                      لن يتم عرض الطلبات إلا بعد تحديد موقعك.
-                    </p>
-                  </div>
-                ) : pendingTrips.length === 0 ? (
-                  <div className="bg-white p-8 rounded-2xl border border-[#8A949E]/20 text-center space-y-2">
-                    <Clock className="w-8 h-8 text-[#8A949E] mx-auto" />
-
-                    <p className="text-sm font-semibold text-[#1F2430]">
-                      مفيش طلبات قريبة منك دلوقتي
-                    </p>
-
-                    <p className="text-xs text-[#6B7280]">
-                      هنظهر لك الطلبات الجديدة الموجودة ضمن 20 كم.
-                    </p>
-                  </div>
-                ) : (
-                  pendingTrips.map(
-                    (trip) => (
-                      <div
-                        key={
-                          trip.id
-                        }
-                        onClick={() =>
-                          setSelectedTripDetails(
-                            trip,
-                          )
-                        }
-                        className="bg-white p-4 rounded-2xl border border-[#8A949E]/20 shadow-sm cursor-pointer hover:border-[#146B44] transition-all space-y-2"
-                      >
-                        <div className="flex items-center justify-between text-xs text-[#6B7280]">
-                          <span className="bg-[#FBEFDC] text-[#8F5A0A] px-2 py-0.5 rounded-md font-medium">
-                            {trip.requester_relation ===
-                              'patient' &&
-                              'مريض'}
-
-                            {trip.requester_relation ===
-                              'guardian' &&
-                              'ولي أمر'}
-
-                            {trip.requester_relation ===
-                              'companion' &&
-                              'مرافق'}
-                          </span>
-
-                          <span>
-                            {formatScheduledAt(
-                              trip.scheduled_at,
-                            )}
-                          </span>
-                        </div>
-
-                        <div className="text-sm font-bold text-[#1F2430] flex items-center gap-2">
-                          <MapPin className="w-4 h-4 text-[#146B44] shrink-0" />
-
-                          <span>
-                            {
-                              trip.origin_area_label
-                            }
-                          </span>
-
-                          <span className="text-[#6B7280]">
-                            ⟶
-                          </span>
-
-                          <span>
-                            {
-                              trip.destination_area_label
-                            }
-                          </span>
-                        </div>
-
-                        {formatDistance(
-                          trip.distance_km,
-                        ) && (
-                          <div className="text-xs text-[#146B44] font-semibold flex items-center gap-1">
-                            <LocateFixed className="w-3.5 h-3.5" />
-
-                            {formatDistance(
-                              trip.distance_km,
-                            )}{' '}
-                            منك
-                          </div>
-                        )}
-                      </div>
-                    ),
-                  )
-                )}
-              </div>
-            )}
-
-            {selectedTripDetails && (
-              <div
-                className="fixed inset-0 z-50 bg-black/40 flex flex-col justify-end p-0"
-                role="dialog"
-                aria-modal="true"
-              >
-                <div className="bg-white rounded-t-3xl p-6 space-y-4 max-w-md mx-auto w-full">
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-bold text-[#1F2430]">
-                      تفاصيل المشوار
-                    </h3>
-
-                    <button
-                      onClick={() =>
-                        setSelectedTripDetails(
-                          null,
-                        )
-                      }
-                      className="text-[#6B7280]"
-                    >
-                      <X className="w-6 h-6" />
-                    </button>
-                  </div>
-
-                  <div className="space-y-2 text-sm text-[#1F2430]">
-                    <div>
-                      <strong>من:</strong>{' '}
-                      {
-                        selectedTripDetails.origin_area_label
-                      }{' '}
-                      (منطقة تقريبية)
-                    </div>
-
-                    <div>
-                      <strong>إلى:</strong>{' '}
-                      {
-                        selectedTripDetails.destination_area_label
-                      }
-                    </div>
-
-                    <div>
-                      <strong>الموعد:</strong>{' '}
-                      {formatScheduledAt(
-                        selectedTripDetails.scheduled_at,
-                      )}
-                    </div>
-
-                    {formatDistance(
-                      selectedTripDetails.distance_km,
-                    ) && (
-                      <div>
-                        <strong>المسافة:</strong>{' '}
-                        {formatDistance(
-                          selectedTripDetails.distance_km,
-                        )}{' '}
-                        منك
-                      </div>
-                    )}
-
-                    {selectedTripDetails.patient_age !==
-                      undefined &&
-                      selectedTripDetails.patient_age !==
-                        null && (
-                        <div>
-                          <strong>عمر المريض:</strong>{' '}
-                          {
-                            selectedTripDetails.patient_age
-                          } سنة
-                        </div>
-                      )}
-
-                    {selectedTripDetails.patient_condition && (
-                      <div>
-                        <strong>الحالة:</strong>{' '}
-                        {
-                          selectedTripDetails.patient_condition
-                        }
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="p-3 bg-[#E6F4ED] rounded-xl text-xs text-[#146B44] flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 shrink-0" />
-
-                    <span>
-                      العنوان ورقم التواصل والبيانات التفصيلية
-                      ستظهر بعد قبول الطلب فقط.
-                    </span>
-                  </div>
-
-                  {!volunteerLocation && (
-                    <button
-                      onClick={
-                        requestVolunteerLocation
-                      }
-                      className="w-full h-[48px] border border-[#146B44] text-[#146B44] font-semibold rounded-xl text-sm"
-                    >
-                      تحديد موقعي أولاً
-                    </button>
-                  )}
-
-                  <button
-                    disabled={
-                      acceptingTripId ===
-                        selectedTripDetails.id ||
-                      !volunteerLocation
-                    }
-                    onClick={() =>
-                      void handleAcceptTrip(
-                        selectedTripDetails.id,
-                      )
-                    }
-                    className="w-full h-[52px] bg-[#146B44] disabled:opacity-40 active:bg-[#0F5636] text-white font-semibold rounded-xl text-base transition-colors flex items-center justify-center gap-2"
-                  >
-                    {acceptingTripId ===
-                    selectedTripDetails.id ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      'قبول المشوار'
-                    )}
-                  </button>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-
-        <ReportModal
-          tripId={
-            activeVolunteerTripData?.trip_id ||
-            activeRequesterTrip?.id
-          }
-          isOpen={
-            reportModalOpen
-          }
-          onClose={() =>
-            setReportModalOpen(
-              false,
-            )
-          }
-          onSuccess={() =>
-            setReportSuccess(
-              true,
-            )
-          }
-        />
-      </main>
-    </div>
-  );
-};
-
-export default App;
+            
