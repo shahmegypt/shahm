@@ -1015,7 +1015,28 @@ export const App: React.FC = () => {
       return;
     }
 
+    // 1. تحديث الـ State الرئيسي بالبيانات الجديدة
     setProfile(updatedProfile);
+
+    // 2. تحديث التخزين المحلي localStorage
+    const pendingProfile = JSON.parse(
+      localStorage.getItem('shahm.pendingProfile') || '{}',
+    );
+    localStorage.setItem(
+      'shahm.pendingProfile',
+      JSON.stringify({
+        ...pendingProfile,
+        firstName: settingsFirstName.trim(),
+        phone: settingsPhone.trim(),
+        ...(profile?.role === 'requester'
+          ? {
+              patientAge: Number(settingsPatientAge),
+              patientCondition: settingsPatientCondition.trim(),
+            }
+          : {}),
+      }),
+    );
+
     setSettingsSuccess(true);
   };
 
