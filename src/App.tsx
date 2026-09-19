@@ -83,7 +83,6 @@ const InstallNotice: React.FC<InstallNoticeProps> = ({
           <p className="font-semibold text-[#1F2430] mb-1">
             خطوات التثبيت على جهازك:
           </p>
-
           <ol className="list-decimal pr-5 space-y-1">
             <li>اضغط زر مشاركة (Share) من المتصفح.</li>
             <li>اختر «إضافة إلى الشاشة الرئيسية».</li>
@@ -92,8 +91,8 @@ const InstallNotice: React.FC<InstallNoticeProps> = ({
         </div>
       ) : (
         <p className="text-xs text-[#6B7280] mb-6 leading-relaxed">
-          قم بتثبيت التطبيق على شاشة هاتفك الرئيسية للوصول السريع،
-          وتلقي التنبيهات، والعمل بأفضل أداء.
+          قم بتثبيت التطبيق على شاشة هاتفك الرئيسية للوصول السريع، وتلقي
+          التنبيهات، والعمل بأفضل أداء.
         </p>
       )}
 
@@ -130,7 +129,6 @@ const TRIP_PUBLIC_COLUMNS =
 
 const getDateTimeInputLimits = () => {
   const now = new Date();
-
   const minDate = new Date(now.getTime() + 5 * 60 * 1000);
   const maxDate = new Date(now.getTime() + 48 * 60 * 60 * 1000);
 
@@ -152,7 +150,6 @@ const getDateTimeInputLimits = () => {
 
 const formatScheduledAt = (value?: string | null) => {
   if (!value) return 'غير محدد';
-
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
@@ -166,16 +163,10 @@ const formatScheduledAt = (value?: string | null) => {
 };
 
 const formatDistance = (distance?: number | null) => {
-  if (distance === null || distance === undefined) {
-    return null;
-  }
-
-  if (!Number.isFinite(Number(distance))) {
-    return null;
-  }
+  if (distance === null || distance === undefined) return null;
+  if (!Number.isFinite(Number(distance))) return null;
 
   const numericDistance = Number(distance);
-
   if (numericDistance < 1) {
     return `${Math.round(numericDistance * 1000)} متر`;
   }
@@ -185,7 +176,6 @@ const formatDistance = (distance?: number | null) => {
 
 const formatTimeSince = (value?: string | null) => {
   if (!value) return null;
-
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
 
@@ -205,8 +195,7 @@ const formatTimeSince = (value?: string | null) => {
 export const App: React.FC = () => {
   const [sessionUser, setSessionUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
-  const [roleSelection, setRoleSelection] =
-    useState<UserRole | null>(null);
+  const [roleSelection, setRoleSelection] = useState<UserRole | null>(null);
 
   const [adminTab, setAdminTab] = useState<
     'trips' | 'safety' | 'analytics' | 'usage'
@@ -219,18 +208,10 @@ export const App: React.FC = () => {
   const [patientCondition, setPatientCondition] = useState('');
 
   const [authLoading, setAuthLoading] = useState(false);
-
-  const [errorMessage, setErrorMessage] =
-    useState<string | null>(null);
-
-  const [sessionLoading, setSessionLoading] =
-    useState(true);
-
-  const [profileLoading, setProfileLoading] =
-    useState(false);
-
-  const [profileError, setProfileError] =
-    useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [sessionLoading, setSessionLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   const activeUserId = useRef<string | null>(null);
 
@@ -248,46 +229,32 @@ export const App: React.FC = () => {
     lng: number;
   } | null>(null);
 
-  const [relation, setRelation] =
-    useState<RequesterRelation>('patient');
-
+  const [relation, setRelation] = useState<RequesterRelation>('patient');
   const [scheduledAt, setScheduledAt] = useState('');
-
   const [ackChecked, setAckChecked] = useState(false);
-
-  const [createTripLoading, setCreateTripLoading] =
-    useState(false);
+  const [createTripLoading, setCreateTripLoading] = useState(false);
 
   const [activeRequesterTrip, setActiveRequesterTrip] =
     useState<PublicTrip | null>(null);
 
-  const [pendingTrips, setPendingTrips] =
-    useState<PublicTrip[]>([]);
+  const [pendingTrips, setPendingTrips] = useState<PublicTrip[]>([]);
 
-  const [
-    activeVolunteerTripData,
-    setActiveVolunteerTripData,
-  ] = useState<ContactCardData | null>(null);
+  const [activeVolunteerTripData, setActiveVolunteerTripData] =
+    useState<ContactCardData | null>(null);
 
   const [selectedTripDetails, setSelectedTripDetails] =
     useState<PublicTrip | null>(null);
 
-  const [acceptingTripId, setAcceptingTripId] =
-    useState<string | null>(null);
-
-  const [raceConditionDetected, setRaceConditionDetected] =
-    useState(false);
+  const [acceptingTripId, setAcceptingTripId] = useState<string | null>(null);
+  const [raceConditionDetected, setRaceConditionDetected] = useState(false);
 
   const [volunteerLocation, setVolunteerLocation] = useState<{
     lat: number;
     lng: number;
   } | null>(null);
 
-  const [locationLoading, setLocationLoading] =
-    useState(false);
-
-  const [locationError, setLocationError] =
-    useState<string | null>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   const [pushLoading, setPushLoading] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(false);
@@ -310,20 +277,11 @@ export const App: React.FC = () => {
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [settingsSuccess, setSettingsSuccess] = useState(false);
 
-  const [loadingNearbyTrips, setLoadingNearbyTrips] =
-    useState(false);
-
-  const [reportModalOpen, setReportModalOpen] =
-    useState(false);
-
-  const [reportSuccess, setReportSuccess] =
-    useState(false);
-
-  const [installDismissed, setInstallDismissed] =
-    useState(false);
-
-  const [installMessage, setInstallMessage] =
-    useState<string | null>(null);
+  const [loadingNearbyTrips, setLoadingNearbyTrips] = useState(false);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportSuccess, setReportSuccess] = useState(false);
+  const [installDismissed, setInstallDismissed] = useState(false);
+  const [installMessage, setInstallMessage] = useState<string | null>(null);
 
   const {
     canInstall,
@@ -332,14 +290,10 @@ export const App: React.FC = () => {
     install,
   } = useInstallPrompt();
 
-  const dateTimeLimits = useMemo(
-    () => getDateTimeInputLimits(),
-    [],
-  );
+  const dateTimeLimits = useMemo(() => getDateTimeInputLimits(), []);
 
   const handleInstall = async () => {
     const installed = await install();
-
     setInstallMessage(
       installed
         ? 'تم تجهيز التطبيق للاستخدام بنجاح.'
@@ -363,8 +317,7 @@ export const App: React.FC = () => {
       className="fixed top-4 left-4 right-4 z-40 mx-auto max-w-md rounded-xl border border-[#E8A33D]/40 bg-[#FBEFDC] p-3 text-right text-xs text-[#8F5A0A]"
       role="alert"
     >
-      التطبيق يحتاج ضبط مفتاح Supabase العام في إعدادات النشر قبل
-      تسجيل الدخول.
+      التطبيق يحتاج ضبط مفتاح Supabase العام في إعدادات النشر قبل تسجيل الدخول.
     </div>
   ) : null;
 
@@ -373,9 +326,7 @@ export const App: React.FC = () => {
       await supabase.auth.signOut();
     } finally {
       activeUserId.current = null;
-
       supabase.removeAllChannels();
-
       localStorage.removeItem('shahm.pendingProfile');
 
       setSessionUser(null);
@@ -430,13 +381,11 @@ export const App: React.FC = () => {
         .maybeSingle();
 
       if (error) throw error;
-
       if (activeUserId.current !== uid) return;
 
       if (!data) {
         const pendingProfile = JSON.parse(
-          localStorage.getItem('shahm.pendingProfile') ||
-            'null',
+          localStorage.getItem('shahm.pendingProfile') || 'null',
         );
 
         if (
@@ -444,18 +393,12 @@ export const App: React.FC = () => {
           pendingProfile?.phone &&
           pendingProfile?.role
         ) {
-          const isRequester =
-            pendingProfile.role === 'requester';
-
-          const age = Number(
-            pendingProfile.patientAge,
-          );
+          const isRequester = pendingProfile.role === 'requester';
+          const age = Number(pendingProfile.patientAge);
 
           if (
             isRequester &&
-            (!Number.isInteger(age) ||
-              age < 0 ||
-              age > 120)
+            (!Number.isInteger(age) || age < 0 || age > 120)
           ) {
             throw new Error(
               'بيانات عمر المريض غير صحيحة. أعد تسجيل الدخول وأدخل العمر بشكل صحيح.',
@@ -464,52 +407,39 @@ export const App: React.FC = () => {
 
           if (
             isRequester &&
-            typeof pendingProfile.patientCondition !==
-              'string'
+            typeof pendingProfile.patientCondition !== 'string'
           ) {
-            throw new Error(
-              'بيانات الحالة الصحية غير مكتملة.',
-            );
+            throw new Error('بيانات الحالة الصحية غير مكتملة.');
           }
 
-          const { data: createdProfile, error: createError } =
-            await supabase
-              .from('profiles')
-              .upsert(
-                {
-                  id: uid,
-                  first_name:
-                    pendingProfile.firstName,
-                  phone_number:
-                    pendingProfile.phone,
-                  role: pendingProfile.role,
-                  verification_status:
-                    'unverified',
-                  ...(isRequester
-                    ? {
-                        patient_age: age,
-                        patient_condition:
-                          pendingProfile.patientCondition.trim(),
-                      }
-                    : {}),
-                },
-                { onConflict: 'id' },
-              )
-              .select()
-              .single();
+          const { data: createdProfile, error: createError } = await supabase
+            .from('profiles')
+            .upsert(
+              {
+                id: uid,
+                first_name: pendingProfile.firstName,
+                phone_number: pendingProfile.phone,
+                role: pendingProfile.role,
+                verification_status: 'unverified',
+                ...(isRequester
+                  ? {
+                      patient_age: age,
+                      patient_condition: pendingProfile.patientCondition.trim(),
+                    }
+                  : {}),
+              },
+              { onConflict: 'id' },
+            )
+            .select()
+            .single();
 
           if (createError) throw createError;
-
           if (activeUserId.current !== uid) return;
 
           setProfile(createdProfile);
-
-          localStorage.removeItem(
-            'shahm.pendingProfile',
-          );
+          localStorage.removeItem('shahm.pendingProfile');
         } else {
           setProfile(null);
-
           setProfileError(
             'بيانات الحساب غير مكتملة. سجّل الخروج وأعد الدخول بعد اختيار الدور.',
           );
@@ -519,7 +449,6 @@ export const App: React.FC = () => {
       }
     } catch (error: unknown) {
       setProfile(null);
-
       setProfileError(
         error instanceof Error
           ? error.message
@@ -539,7 +468,6 @@ export const App: React.FC = () => {
 
     try {
       const enabled = await registerPushNotifications();
-
       if (enabled) {
         setPushEnabled(true);
       } else {
@@ -556,7 +484,10 @@ export const App: React.FC = () => {
   };
 
   useEffect(() => {
-    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+    if (
+      typeof Notification !== 'undefined' &&
+      Notification.permission === 'granted'
+    ) {
       setPushEnabled(true);
     }
   }, []);
@@ -582,9 +513,7 @@ export const App: React.FC = () => {
     setLocationError(null);
 
     if (!navigator.geolocation) {
-      setLocationError(
-        'المتصفح لا يدعم تحديد الموقع.',
-      );
+      setLocationError('المتصفح لا يدعم تحديد الموقع.');
       return;
     }
 
@@ -595,47 +524,25 @@ export const App: React.FC = () => {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
 
-        if (
-          !Number.isFinite(lat) ||
-          !Number.isFinite(lng)
-        ) {
-          setLocationError(
-            'تعذر قراءة موقعك الحالي.',
-          );
-
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+          setLocationError('تعذر قراءة موقعك الحالي.');
           setLocationLoading(false);
           return;
         }
 
-        setVolunteerLocation({
-          lat,
-          lng,
-        });
-
+        setVolunteerLocation({ lat, lng });
         setLocationLoading(false);
       },
       (error) => {
-        let message =
-          'تعذر الحصول على موقعك الحالي.';
-
-        if (
-          error.code ===
-          error.PERMISSION_DENIED
-        ) {
+        let message = 'تعذر الحصول على موقعك الحالي.';
+        if (error.code === error.PERMISSION_DENIED) {
           message =
             'اسمح للتطبيق باستخدام موقعك حتى نعرض الطلبات الموجودة ضمن 20 كم منك.';
-        } else if (
-          error.code ===
-          error.POSITION_UNAVAILABLE
-        ) {
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
           message =
             'موقعك الحالي غير متاح. جرّب تشغيل GPS ثم المحاولة مرة أخرى.';
-        } else if (
-          error.code ===
-          error.TIMEOUT
-        ) {
-          message =
-            'انتهى وقت انتظار تحديد الموقع. حاول مرة أخرى.';
+        } else if (error.code === error.TIMEOUT) {
+          message = 'انتهى وقت انتظار تحديد الموقع. حاول مرة أخرى.';
         }
 
         setLocationError(message);
@@ -649,40 +556,29 @@ export const App: React.FC = () => {
     );
   };
 
-  const loadNearbyTrips = async (
-    locationOverride?: {
-      lat: number;
-      lng: number;
-    },
-  ) => {
-    if (profile?.role !== 'volunteer') {
-      return;
-    }
+  const loadNearbyTrips = async (locationOverride?: {
+    lat: number;
+    lng: number;
+  }) => {
+    if (profile?.role !== 'volunteer') return;
 
-    const location =
-      locationOverride ||
-      volunteerLocation;
-
+    const location = locationOverride || volunteerLocation;
     if (!location) return;
 
     setLoadingNearbyTrips(true);
 
     try {
-      const { data, error } =
-        await supabase.rpc(
-          'get_pending_trips_nearby',
-          {
-            p_lat: location.lat,
-            p_lng: location.lng,
-            p_radius_km: 20,
-          },
-        );
+      const { data, error } = await supabase.rpc(
+        'get_pending_trips_nearby',
+        {
+          p_lat: location.lat,
+          p_lng: location.lng,
+          p_radius_km: 20,
+        },
+      );
 
       if (error) throw error;
-
-      setPendingTrips(
-        (data || []) as unknown as PublicTrip[],
-      );
+      setPendingTrips((data || []) as unknown as PublicTrip[]);
     } catch (error: unknown) {
       setErrorMessage(
         error instanceof Error
@@ -694,38 +590,24 @@ export const App: React.FC = () => {
     }
   };
 
-  const loadActiveVolunteerTrip = async (
-    uid: string,
-  ) => {
-    const { data, error } =
-      await supabase
-        .from('trips')
-        .select('id')
-        .eq('volunteer_id', uid)
-        .eq('status', 'accepted')
-        .limit(1)
-        .maybeSingle();
+  const loadActiveVolunteerTrip = async (uid: string) => {
+    const { data, error } = await supabase
+      .from('trips')
+      .select('id')
+      .eq('volunteer_id', uid)
+      .eq('status', 'accepted')
+      .limit(1)
+      .maybeSingle();
 
-    if (error || !data) {
-      return;
-    }
+    if (error || !data) return;
 
-    const { data: contact, error: contactError } =
-      await supabase.rpc(
-        'reveal_contact',
-        {
-          p_trip_id: data.id,
-        },
-      );
+    const { data: contact, error: contactError } = await supabase.rpc(
+      'reveal_contact',
+      { p_trip_id: data.id },
+    );
 
-    if (
-      !contactError &&
-      contact &&
-      contact.length > 0
-    ) {
-      setActiveVolunteerTripData(
-        contact[0] as ContactCardData,
-      );
+    if (!contactError && contact && contact.length > 0) {
+      setActiveVolunteerTripData(contact[0] as ContactCardData);
     }
   };
 
@@ -734,70 +616,47 @@ export const App: React.FC = () => {
 
     supabase.auth
       .getSession()
-      .then(
-        ({
-          data: { session },
-          error,
-        }) => {
-          if (cancelled) return;
-
-          if (error) {
-            setProfileError(
-              `تعذر استعادة جلسة الدخول: ${error.message}`,
-            );
-          }
-
-          setSessionUser(
-            session?.user ?? null,
-          );
-
-          activeUserId.current =
-            session?.user.id ?? null;
-
-          if (session?.user) {
-            void fetchProfile(
-              session.user.id,
-            );
-          } else {
-            setSessionLoading(false);
-          }
-        },
-      )
-      .catch((error: unknown) => {
+      .then(({ data: { session }, error }) => {
         if (cancelled) return;
 
+        if (error) {
+          setProfileError(`تعذر استعادة جلسة الدخول: ${error.message}`);
+        }
+
+        setSessionUser(session?.user ?? null);
+        activeUserId.current = session?.user.id ?? null;
+
+        if (session?.user) {
+          void fetchProfile(session.user.id);
+        } else {
+          setSessionLoading(false);
+        }
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
         setProfileError(
           error instanceof Error
             ? error.message
             : 'تعذر استعادة جلسة الدخول',
         );
-
         setSessionLoading(false);
       });
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSessionUser(
-          session?.user ?? null,
-        );
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSessionUser(session?.user ?? null);
+      activeUserId.current = session?.user.id ?? null;
 
-        activeUserId.current =
-          session?.user.id ?? null;
+      if (session?.user) {
+        void fetchProfile(session.user.id);
+      } else {
+        setProfile(null);
+        setProfileError(null);
+      }
 
-        if (session?.user) {
-          void fetchProfile(
-            session.user.id,
-          );
-        } else {
-          setProfile(null);
-          setProfileError(null);
-        }
-
-        setSessionLoading(false);
-      },
-    );
+      setSessionLoading(false);
+    });
 
     return () => {
       cancelled = true;
@@ -813,14 +672,9 @@ export const App: React.FC = () => {
         supabase
           .from('trips')
           .select(TRIP_PUBLIC_COLUMNS)
-          .in('status', [
-            'pending',
-            'accepted',
-          ])
+          .in('status', ['pending', 'accepted'])
           .eq('requester_id', profile.id)
-          .order('created_at', {
-            ascending: false,
-          })
+          .order('created_at', { ascending: false })
           .limit(1)
           .then(({ data, error }) => {
             if (error) {
@@ -828,10 +682,7 @@ export const App: React.FC = () => {
               return;
             }
 
-            if (
-              data &&
-              data.length > 0
-            ) {
+            if (data && data.length > 0) {
               const trip = data[0] as unknown as PublicTrip;
               setActiveRequesterTrip(trip);
 
@@ -876,15 +727,10 @@ export const App: React.FC = () => {
 
     if (profile.role === 'volunteer') {
       requestVolunteerLocation();
-
-      void loadActiveVolunteerTrip(
-        profile.id,
-      );
+      void loadActiveVolunteerTrip(profile.id);
 
       const channel = supabase
-        .channel(
-          `trips-realtime-${profile.id}`,
-        )
+        .channel(`trips-realtime-${profile.id}`)
         .on(
           'postgres_changes',
           {
@@ -894,9 +740,7 @@ export const App: React.FC = () => {
           },
           () => {
             if (volunteerLocation) {
-              void loadNearbyTrips(
-                volunteerLocation,
-              );
+              void loadNearbyTrips(volunteerLocation);
             }
           },
         )
@@ -913,9 +757,7 @@ export const App: React.FC = () => {
       profile.role === 'analytics_viewer'
     ) {
       const channel = supabase
-        .channel(
-          `admin-trips-realtime-${profile.id}`,
-        )
+        .channel(`admin-trips-realtime-${profile.id}`)
         .on(
           'postgres_changes',
           {
@@ -934,20 +776,12 @@ export const App: React.FC = () => {
   }, [profile]);
 
   useEffect(() => {
-    if (
-      profile?.role !== 'volunteer' ||
-      !volunteerLocation
-    ) {
+    if (profile?.role !== 'volunteer' || !volunteerLocation) {
       return;
     }
 
-    void loadNearbyTrips(
-      volunteerLocation,
-    );
-  }, [
-    profile?.role,
-    volunteerLocation,
-  ]);
+    void loadNearbyTrips(volunteerLocation);
+  }, [profile?.role, volunteerLocation]);
 
   const handleOpenSettings = () => {
     setSettingsFirstName(profile?.first_name ?? '');
@@ -1044,38 +878,23 @@ export const App: React.FC = () => {
 
     if (
       !firstName.trim() ||
-      !/^01\d{9}$/.test(
-        phone.trim(),
-      )
+      !/^01\d{9}$/.test(phone.trim())
     ) {
-      setErrorMessage(
-        'أدخل الاسم ورقم هاتف مصري صحيح يبدأ بـ 01.',
-      );
+      setErrorMessage('أدخل الاسم ورقم هاتف مصري صحيح يبدأ بـ 01.');
       return;
     }
 
-    if (
-      roleSelection === 'requester'
-    ) {
-      const age = Number(
-        patientAge,
-      );
+    if (roleSelection === 'requester') {
+      const age = Number(patientAge);
 
-      if (
-        !Number.isInteger(age) ||
-        age < 0 ||
-        age > 120
-      ) {
-        setErrorMessage(
-          'أدخل عمر المريض من 0 إلى 120 سنة.',
-        );
+      if (!Number.isInteger(age) || age < 0 || age > 120) {
+        setErrorMessage('أدخل عمر المريض من 0 إلى 120 سنة.');
         return;
       }
 
       if (
         !patientCondition.trim() ||
-        patientCondition.trim().length >
-          500
+        patientCondition.trim().length > 500
       ) {
         setErrorMessage(
           'اكتب وصفًا مختصرًا للحالة الصحية بحد أقصى 500 حرف.',
@@ -1087,23 +906,13 @@ export const App: React.FC = () => {
     localStorage.setItem(
       'shahm.pendingProfile',
       JSON.stringify({
-        firstName:
-          firstName.trim(),
-
-        phone:
-          phone.trim(),
-
-        role:
-          roleSelection,
-
-        ...(roleSelection ===
-        'requester'
+        firstName: firstName.trim(),
+        phone: phone.trim(),
+        role: roleSelection,
+        ...(roleSelection === 'requester'
           ? {
-              patientAge:
-                Number(patientAge),
-
-              patientCondition:
-                patientCondition.trim(),
+              patientAge: Number(patientAge),
+              patientCondition: patientCondition.trim(),
             }
           : {}),
       }),
@@ -1111,65 +920,37 @@ export const App: React.FC = () => {
 
     setAuthLoading(true);
 
-    const { error } =
-      await supabase.auth.signInWithOAuth(
-        {
-          provider: 'google',
-
-          options: {
-            redirectTo:
-              window.location.origin,
-
-            queryParams: {
-              prompt:
-                'select_account',
-            },
-          },
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin,
+        queryParams: {
+          prompt: 'select_account',
         },
-      );
+      },
+    });
 
     if (error) {
       setAuthLoading(false);
-
-      setErrorMessage(
-        `تعذر تسجيل الدخول عبر Google: ${error.message}`,
-      );
+      setErrorMessage(`تعذر تسجيل الدخول عبر Google: ${error.message}`);
     }
   };
 
   const handleCreateTrip = async () => {
-    if (
-      !origin ||
-      !dest ||
-      !ackChecked ||
-      !scheduledAt
-    ) {
+    if (!origin || !dest || !ackChecked || !scheduledAt) {
       return;
     }
 
-    const selectedDate =
-      new Date(scheduledAt);
-
+    const selectedDate = new Date(scheduledAt);
     const now = Date.now();
-
-    const max =
-      now +
-      48 *
-        60 *
-        60 *
-        1000;
+    const max = now + 48 * 60 * 60 * 1000;
 
     if (
-      Number.isNaN(
-        selectedDate.getTime(),
-      ) ||
-      selectedDate.getTime() <=
-        now ||
+      Number.isNaN(selectedDate.getTime()) ||
+      selectedDate.getTime() <= now ||
       selectedDate.getTime() > max
     ) {
-      setErrorMessage(
-        'اختار موعدًا مستقبليًا خلال الـ 48 ساعة القادمة.',
-      );
+      setErrorMessage('اختار موعدًا مستقبليًا خلال الـ 48 ساعة القادمة.');
       return;
     }
 
@@ -1177,239 +958,114 @@ export const App: React.FC = () => {
     setErrorMessage(null);
 
     try {
-      const session =
-        (
-          await supabase.auth.getSession()
-        ).data.session;
+      const session = (await supabase.auth.getSession()).data.session;
 
-      if (
-        !session?.access_token
-      ) {
-        throw new Error(
-          'انتهت جلسة الدخول. سجّل الدخول مرة أخرى.',
-        );
+      if (!session?.access_token) {
+        throw new Error('انتهت جلسة الدخول. سجّل الدخول مرة أخرى.');
       }
 
-      const response =
-        await fetch(
-          `${supabaseUrl}/functions/v1/create-trip-proxy`,
-          {
-            method: 'POST',
-
-            headers: {
-              'Content-Type':
-                'application/json',
-
-              Authorization:
-                `Bearer ${session.access_token}`,
-            },
-
-            body: JSON.stringify({
-              origin_area_label:
-                origin.areaLabel,
-
-              origin_address:
-                origin.fullAddress,
-
-              origin_lat:
-                origin.lat,
-
-              origin_lng:
-                origin.lng,
-
-              destination_area_label:
-                dest.areaLabel,
-
-              destination_address:
-                dest.fullAddress,
-
-              destination_lat:
-                dest.lat,
-
-              destination_lng:
-                dest.lng,
-
-              requester_relation:
-                relation,
-
-              scheduled_at:
-                selectedDate.toISOString(),
-            }),
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/create-trip-proxy`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
           },
-        );
+          body: JSON.stringify({
+            origin_area_label: origin.areaLabel,
+            origin_address: origin.fullAddress,
+            origin_lat: origin.lat,
+            origin_lng: origin.lng,
+            destination_area_label: dest.areaLabel,
+            destination_address: dest.fullAddress,
+            destination_lat: dest.lat,
+            destination_lng: dest.lng,
+            requester_relation: relation,
+            scheduled_at: selectedDate.toISOString(),
+          }),
+        },
+      );
 
-      const responseText =
-        await response.text();
-
-      let resJson: {
-        error?: string;
-        trip_id?: string;
-      } = {};
+      const responseText = await response.text();
+      let resJson: { error?: string; trip_id?: string } = {};
 
       try {
-        resJson =
-          JSON.parse(
-            responseText,
-          );
+        resJson = JSON.parse(responseText);
       } catch {
-        resJson = {
-          error:
-            responseText,
-        };
+        resJson = { error: responseText };
       }
 
       if (!response.ok) {
         throw new Error(
-          resJson.error ||
-            `فشل إنشاء الطلب (${response.status})`,
+          resJson.error || `فشل إنشاء الطلب (${response.status})`,
         );
       }
 
       if (!resJson.trip_id) {
-        throw new Error(
-          'تم استلام الطلب بدون رقم طلب من الخادم',
-        );
+        throw new Error('تم استلام الطلب بدون رقم طلب من الخادم');
       }
 
       const newTrip: PublicTrip = {
-        id:
-          resJson.trip_id,
-
-        requester_id:
-          profile?.id ||
-          session.user.id,
-
-        volunteer_id:
-          null,
-
-        origin_area_label:
-          origin.areaLabel,
-
-        destination_area_label:
-          dest.areaLabel,
-
-        status:
-          'pending',
-
-        requester_relation:
-          relation,
-
-        scheduled_at:
-          selectedDate.toISOString(),
-
-        created_at:
-          new Date().toISOString(),
-
-        accepted_at:
-          null,
-
-        completed_at:
-          null,
+        id: resJson.trip_id,
+        requester_id: profile?.id || session.user.id,
+        volunteer_id: null,
+        origin_area_label: origin.areaLabel,
+        destination_area_label: dest.areaLabel,
+        status: 'pending',
+        requester_relation: relation,
+        scheduled_at: selectedDate.toISOString(),
+        created_at: new Date().toISOString(),
+        accepted_at: null,
+        completed_at: null,
       };
 
-      setActiveRequesterTrip(
-        newTrip,
-      );
-
+      setActiveRequesterTrip(newTrip);
       setScheduledAt('');
       setOrigin(null);
       setDest(null);
       setAckChecked(false);
     } catch (err: any) {
-      setErrorMessage(
-        err?.message ||
-          'تعذر إنشاء طلب النقل.',
-      );
+      setErrorMessage(err?.message || 'تعذر إنشاء طلب النقل.');
     } finally {
       setCreateTripLoading(false);
     }
   };
 
-  const handleAcceptTrip = async (
-    tripId: string,
-  ) => {
+  const handleAcceptTrip = async (tripId: string) => {
     if (!volunteerLocation) {
-      setErrorMessage(
-        'لازم نحدد موقعك الحالي قبل قبول المشوار.',
-      );
-
+      setErrorMessage('لازم نحدد موقعك الحالي قبل قبول المشوار.');
       requestVolunteerLocation();
-
       return;
     }
 
-    setAcceptingTripId(
-      tripId,
-    );
-
+    setAcceptingTripId(tripId);
     setErrorMessage(null);
 
-    const {
-      data,
-      error,
-    } = await supabase.rpc(
-      'accept_trip',
-      {
-        p_trip_id:
-          tripId,
+    const { data, error } = await supabase.rpc('accept_trip', {
+      p_trip_id: tripId,
+      p_volunteer_lat: volunteerLocation.lat,
+      p_volunteer_lng: volunteerLocation.lng,
+    });
 
-        p_volunteer_lat:
-          volunteerLocation.lat,
-
-        p_volunteer_lng:
-          volunteerLocation.lng,
-      },
-    );
-
-    setAcceptingTripId(
-      null,
-    );
+    setAcceptingTripId(null);
 
     if (error) {
-      if (
-        error.message.includes(
-          'تم قبول هذا الطلب من متطوع آخر',
-        )
-      ) {
-        setRaceConditionDetected(
-          true,
-        );
+      if (error.message.includes('تم قبول هذا الطلب من متطوع آخر')) {
+        setRaceConditionDetected(true);
       } else {
-        setErrorMessage(
-          error.message,
-        );
+        setErrorMessage(error.message);
       }
 
-      setSelectedTripDetails(
-        null,
-      );
-
-      await loadNearbyTrips(
-        volunteerLocation,
-      );
-
+      setSelectedTripDetails(null);
+      await loadNearbyTrips(volunteerLocation);
       return;
     }
 
-    if (
-      data &&
-      data.length > 0
-    ) {
-      setActiveVolunteerTripData(
-        data[0] as ContactCardData,
-      );
-
-      setSelectedTripDetails(
-        null,
-      );
-
-      setPendingTrips(
-        (prev) =>
-          prev.filter(
-            (trip) =>
-              trip.id !== tripId,
-          ),
-      );
+    if (data && data.length > 0) {
+      setActiveVolunteerTripData(data[0] as ContactCardData);
+      setSelectedTripDetails(null);
+      setPendingTrips((prev) => prev.filter((trip) => trip.id !== tripId));
 
       void (async () => {
         try {
@@ -1431,96 +1087,51 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleCancelTrip = async (
-    tripId: string,
-  ) => {
-    const { error } =
-      await supabase.rpc(
-        'cancel_trip',
-        {
-          p_trip_id:
-            tripId,
-        },
-      );
+  const handleCancelTrip = async (tripId: string) => {
+    const { error } = await supabase.rpc('cancel_trip', {
+      p_trip_id: tripId,
+    });
 
     if (!error) {
-      setActiveRequesterTrip(
-        null,
-      );
+      setActiveRequesterTrip(null);
     } else {
-      setErrorMessage(
-        error.message,
-      );
+      setErrorMessage(error.message);
     }
   };
 
-  const handleCompleteTrip = async (
-    tripId: string,
-  ) => {
-    const { error } =
-      await supabase.rpc(
-        'complete_trip',
-        {
-          p_trip_id:
-            tripId,
-        },
-      );
+  const handleCompleteTrip = async (tripId: string) => {
+    const { error } = await supabase.rpc('complete_trip', {
+      p_trip_id: tripId,
+    });
 
     if (!error) {
-      setActiveRequesterTrip(
-        null,
-      );
-
-      setActiveVolunteerTripData(
-        null,
-      );
+      setActiveRequesterTrip(null);
+      setActiveVolunteerTripData(null);
     } else {
-      setErrorMessage(
-        error.message,
-      );
+      setErrorMessage(error.message);
     }
   };
 
-  if (
-    sessionLoading ||
-    (sessionUser &&
-      profileLoading)
-  ) {
+  if (sessionLoading || (sessionUser && profileLoading)) {
     return (
       <div className="min-h-screen bg-[#F7F8F9] flex items-center justify-center p-4 text-[#6B7280]">
-        <div
-          className="flex items-center gap-2 text-sm"
-          role="status"
-        >
+        <div className="flex items-center gap-2 text-sm" role="status">
           <Loader2 className="w-5 h-5 animate-spin text-[#146B44]" />
-
           جاري تحميل الحساب...
         </div>
       </div>
     );
   }
 
-  if (
-    sessionUser &&
-    profileError
-  ) {
+  if (sessionUser && profileError) {
     return (
       <div className="min-h-screen bg-[#F7F8F9] flex items-center justify-center p-4 text-center">
         <div className="w-full max-w-sm bg-white p-6 rounded-2xl border border-[#FCEAEA] space-y-3">
           <AlertCircle className="w-8 h-8 mx-auto text-[#B53A3A]" />
-
-          <h2 className="font-bold text-[#1F2430]">
-            تعذر تحميل دور الحساب
-          </h2>
-
-          <p className="text-xs text-[#6B7280]">
-            {profileError}
-          </p>
-
+          <h2 className="font-bold text-[#1F2430]">تعذر تحميل دور الحساب</h2>
+          <p className="text-xs text-[#6B7280]">{profileError}</p>
           <button
-            onClick={
-              handleSignOut
-            }
+            onClick={handleSignOut}
             className="text-xs text-[#146B44] font-bold"
           >
             تسجيل الخروج
@@ -1530,29 +1141,20 @@ export const App: React.FC = () => {
     );
   }
 
-  if (
-    profile &&
-    !profile.is_active
-  ) {
+  if (profile && !profile.is_active) {
     return (
       <div className="min-h-screen bg-[#F7F8F9] flex flex-col justify-center items-center p-4 text-center">
         <div className="w-16 h-16 bg-[#FCEAEA] text-[#B53A3A] rounded-full flex items-center justify-center mx-auto mb-4">
           <Ban className="w-8 h-8" />
         </div>
-
         <h2 className="text-lg font-bold text-[#1F2430] mb-2">
           الحساب غير نشط مؤقتاً
         </h2>
-
         <p className="text-xs text-[#6B7280] max-w-xs mb-6 leading-relaxed">
-          تم تعليق استخدام هذا الحساب مؤقتاً لمراجعة
-          معايير السلامة والتكافل.
+          تم تعليق استخدام هذا الحساب مؤقتاً لمراجعة معايير السلامة والتكافل.
         </p>
-
         <button
-          onClick={
-            handleSignOut
-          }
+          onClick={handleSignOut}
           className="text-xs text-[#146B44] font-bold"
         >
           تسجيل الخروج
@@ -1561,40 +1163,25 @@ export const App: React.FC = () => {
     );
   }
 
-  if (
-    !sessionUser &&
-    !roleSelection
-  ) {
+  if (!sessionUser && !roleSelection) {
     return (
       <div className="min-h-screen bg-[#F7F8F9] flex flex-col justify-center items-center p-4">
         <div className="w-full max-w-sm bg-white p-6 rounded-2xl shadow-sm border border-[#8A949E]/20 text-center">
-          <h1 className="text-2xl font-bold text-[#1F2430] mb-1">
-            شَهْم
-          </h1>
-
+          <h1 className="text-2xl font-bold text-[#1F2430] mb-1">شَهْم</h1>
           <p className="text-xs text-[#6B7280] mb-6 italic">
-            ﴿وَمَنْ أَحْيَاهَا فَكَأَنَّمَا أَحْيَا
-            النَّاسَ جَمِيعًا﴾
+            ﴿وَمَنْ أَحْيَاهَا فَكَأَنَّمَا أَحْيَا النَّاسَ جَمِيعًا﴾
           </p>
 
           <div className="space-y-3">
             <button
-              onClick={() =>
-                setRoleSelection(
-                  'volunteer',
-                )
-              }
+              onClick={() => setRoleSelection('volunteer')}
               className="w-full h-[52px] bg-[#146B44] active:bg-[#0F5636] text-white font-semibold rounded-xl text-base transition-colors flex items-center justify-center gap-2"
             >
               عندي سيارة، عايز أساعد
             </button>
 
             <button
-              onClick={() =>
-                setRoleSelection(
-                  'requester',
-                )
-              }
+              onClick={() => setRoleSelection('requester')}
               className="w-full h-[52px] bg-white border-2 border-[#146B44] text-[#146B44] font-semibold rounded-xl text-base hover:bg-[#E6F4ED] transition-colors flex items-center justify-center gap-2"
             >
               محتاج نقل لحالة علاجية
@@ -1613,9 +1200,7 @@ export const App: React.FC = () => {
       <div className="min-h-screen bg-[#F7F8F9] flex flex-col justify-center items-center p-4">
         <div className="w-full max-w-sm bg-white p-6 rounded-2xl shadow-sm border border-[#8A949E]/20">
           <button
-            onClick={() =>
-              setRoleSelection(null)
-            }
+            onClick={() => setRoleSelection(null)}
             className="text-xs text-[#6B7280] mb-4 hover:text-[#1F2430]"
           >
             ← العودة لاختيار الدور
@@ -1624,7 +1209,6 @@ export const App: React.FC = () => {
           <h2 className="text-xl font-bold text-[#1F2430] mb-2">
             تسجيل البيانات
           </h2>
-
           <p className="text-xs text-[#6B7280] mb-6">
             الاسم ورقم الجوال للتواصل عند القبول
           </p>
@@ -1632,17 +1216,13 @@ export const App: React.FC = () => {
           {errorMessage && (
             <div className="p-3 mb-4 bg-[#FCEAEA] text-[#B53A3A] text-xs rounded-xl flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
-
-              <span>
-                {errorMessage}
-              </span>
+              <span>{errorMessage}</span>
             </div>
           )}
 
           <form
             onSubmit={(event) => {
               event.preventDefault();
-
               void handleGoogleLogin();
             }}
             className="space-y-4"
@@ -1651,16 +1231,11 @@ export const App: React.FC = () => {
               <label className="block text-sm font-semibold text-[#1F2430] mb-1">
                 اسمك الأول
               </label>
-
               <input
                 type="text"
                 required
                 value={firstName}
-                onChange={(e) =>
-                  setFirstName(
-                    e.target.value,
-                  )
-                }
+                onChange={(e) => setFirstName(e.target.value)}
                 placeholder="مثال: أحمد"
                 className="w-full h-[52px] px-4 bg-white border border-[#8A949E] rounded-xl text-base text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
               />
@@ -1670,40 +1245,29 @@ export const App: React.FC = () => {
               <label className="block text-sm font-semibold text-[#1F2430] mb-1">
                 رقم الجوال (للتواصل)
               </label>
-
               <input
                 type="tel"
                 required
                 value={phone}
-                onChange={(e) =>
-                  setPhone(
-                    e.target.value,
-                  )
-                }
+                onChange={(e) => setPhone(e.target.value)}
                 placeholder="01XXXXXXXXX"
                 className="w-full h-[52px] px-4 bg-white border border-[#8A949E] rounded-xl text-base text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
               />
             </div>
 
-            {roleSelection ===
-              'requester' && (
+            {roleSelection === 'requester' && (
               <>
                 <div>
                   <label className="block text-sm font-semibold text-[#1F2430] mb-1">
                     عمر المريض
                   </label>
-
                   <input
                     type="number"
                     required
                     min={0}
                     max={120}
                     value={patientAge}
-                    onChange={(e) =>
-                      setPatientAge(
-                        e.target.value,
-                      )
-                    }
+                    onChange={(e) => setPatientAge(e.target.value)}
                     placeholder="مثال: 45"
                     className="w-full h-[52px] px-4 bg-white border border-[#8A949E] rounded-xl text-base text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
                   />
@@ -1713,24 +1277,17 @@ export const App: React.FC = () => {
                   <label className="block text-sm font-semibold text-[#1F2430] mb-1">
                     وصف مختصر للحالة الصحية
                   </label>
-
                   <textarea
                     required
                     maxLength={500}
                     value={patientCondition}
-                    onChange={(e) =>
-                      setPatientCondition(
-                        e.target.value,
-                      )
-                    }
+                    onChange={(e) => setPatientCondition(e.target.value)}
                     placeholder="مثال: جلسات غسيل كلى، متابعة أورام، علاج طبيعي..."
                     rows={3}
                     className="w-full px-4 py-3 bg-white border border-[#8A949E] rounded-xl text-sm text-[#1F2430] focus:border-[#2F6FED] focus:outline-none resize-none"
                   />
-
                   <p className="text-[10px] text-[#6B7280] mt-1">
-                    البيانات تستخدم لتنسيق المشوار وتظهر للمتطوع
-                    بعد قبول الطلب.
+                    البيانات تستخدم لتنسيق المشوار وتظهر للمتطوع بعد قبول الطلب.
                   </p>
                 </div>
               </>
@@ -1738,20 +1295,15 @@ export const App: React.FC = () => {
 
             <button
               type="button"
-              onClick={() =>
-                void handleGoogleLogin()
-              }
+              onClick={() => void handleGoogleLogin()}
               disabled={authLoading}
               className="w-full h-[52px] bg-white border border-[#8A949E] text-[#1F2430] font-semibold rounded-xl text-base hover:bg-[#F7F8F9] transition-colors flex items-center justify-center gap-2"
             >
               {authLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
-                <span className="font-bold text-[#4285F4]">
-                  G
-                </span>
+                <span className="font-bold text-[#4285F4]">G</span>
               )}
-
               الدخول باستخدام Google
             </button>
           </form>
@@ -1765,19 +1317,11 @@ export const App: React.FC = () => {
 
   const isAdmin =
     profile?.role &&
-    [
-      'ops_admin',
-      'super_admin',
-      'analytics_viewer',
-    ].includes(profile.role);
+    ['ops_admin', 'super_admin', 'analytics_viewer'].includes(profile.role);
 
-  const showRequesterView =
-    profile?.role === 'requester';
-
+  const showRequesterView = profile?.role === 'requester';
   const showVolunteerView =
-    profile?.role === 'volunteer' ||
-    (isAdmin &&
-      adminTab === 'trips');
+    profile?.role === 'volunteer' || (isAdmin && adminTab === 'trips');
 
   if (
     sessionUser &&
@@ -1787,27 +1331,18 @@ export const App: React.FC = () => {
       'ops_admin',
       'super_admin',
       'analytics_viewer',
-    ].includes(
-      profile?.role,
-    )
+    ].includes(profile?.role)
   ) {
     return (
       <div className="min-h-screen bg-[#F7F8F9] flex items-center justify-center p-4 text-center">
         <div className="w-full max-w-sm bg-white p-6 rounded-2xl border border-[#8A949E]/20 space-y-3">
           <AlertCircle className="w-8 h-8 mx-auto text-[#B53A3A]" />
-
-          <h2 className="font-bold text-[#1F2430]">
-            الدور غير مكتمل
-          </h2>
-
+          <h2 className="font-bold text-[#1F2430]">الدور غير مكتمل</h2>
           <p className="text-xs text-[#6B7280]">
             حسابك لا يحتوي على دور صالح في جدول profiles.
           </p>
-
           <button
-            onClick={
-              handleSignOut
-            }
+            onClick={handleSignOut}
             className="text-xs text-[#146B44] font-bold"
           >
             تسجيل الخروج
@@ -1828,13 +1363,10 @@ export const App: React.FC = () => {
             <span className="font-bold text-[#1F2430]">
               أهلاً، {profile?.first_name}
             </span>
-
             <span className="text-xs bg-[#E6F4ED] text-[#146B44] px-2 py-0.5 rounded-full font-medium">
-              {profile?.role ===
-              'volunteer'
+              {profile?.role === 'volunteer'
                 ? 'متطوع'
-                : profile?.role ===
-                    'requester'
+                : profile?.role === 'requester'
                   ? 'صاحب طلب'
                   : 'إدارة النظام'}
             </span>
@@ -1860,9 +1392,7 @@ export const App: React.FC = () => {
             </button>
 
             <button
-              onClick={
-                handleSignOut
-              }
+              onClick={handleSignOut}
               className="text-xs text-[#6B7280] hover:text-[#1F2430]"
             >
               تسجيل الخروج
@@ -1873,12 +1403,9 @@ export const App: React.FC = () => {
         {isAdmin && (
           <div className="max-w-2xl mx-auto flex gap-2 mt-3 pt-2 border-t border-[#8A949E]/10 overflow-x-auto">
             <button
-              onClick={() =>
-                setAdminTab('trips')
-              }
+              onClick={() => setAdminTab('trips')}
               className={`px-3 py-1 text-xs rounded-lg font-semibold flex items-center gap-1 ${
-                adminTab ===
-                'trips'
+                adminTab === 'trips'
                   ? 'bg-[#146B44] text-white'
                   : 'bg-[#F7F8F9] text-[#6B7280]'
               }`}
@@ -1887,12 +1414,9 @@ export const App: React.FC = () => {
             </button>
 
             <button
-              onClick={() =>
-                setAdminTab('safety')
-              }
+              onClick={() => setAdminTab('safety')}
               className={`px-3 py-1 text-xs rounded-lg font-semibold flex items-center gap-1 ${
-                adminTab ===
-                'safety'
+                adminTab === 'safety'
                   ? 'bg-[#146B44] text-white'
                   : 'bg-[#F7F8F9] text-[#6B7280]'
               }`}
@@ -1902,12 +1426,9 @@ export const App: React.FC = () => {
             </button>
 
             <button
-              onClick={() =>
-                setAdminTab('analytics')
-              }
+              onClick={() => setAdminTab('analytics')}
               className={`px-3 py-1 text-xs rounded-lg font-semibold flex items-center gap-1 ${
-                adminTab ===
-                'analytics'
+                adminTab === 'analytics'
                   ? 'bg-[#146B44] text-white'
                   : 'bg-[#F7F8F9] text-[#6B7280]'
               }`}
@@ -1917,12 +1438,9 @@ export const App: React.FC = () => {
             </button>
 
             <button
-              onClick={() =>
-                setAdminTab('usage')
-              }
+              onClick={() => setAdminTab('usage')}
               className={`px-3 py-1 text-xs rounded-lg font-semibold flex items-center gap-1 ${
-                adminTab ===
-                'usage'
+                adminTab === 'usage'
                   ? 'bg-[#146B44] text-white'
                   : 'bg-[#F7F8F9] text-[#6B7280]'
               }`}
@@ -1935,41 +1453,24 @@ export const App: React.FC = () => {
       </header>
 
       <main className="flex-1 max-w-2xl w-full mx-auto p-4 space-y-4">
-        {isAdmin &&
-          adminTab ===
-            'safety' && (
-            <SafetyPanel />
-          )}
-
-        {isAdmin &&
-          adminTab ===
-            'analytics' && (
-            <AnalyticsDashboard />
-          )}
-
-        {isAdmin &&
-          adminTab ===
-            'usage' && (
-            <UsageMonitor />
-          )}
+        {isAdmin && adminTab === 'safety' && <SafetyPanel />}
+        {isAdmin && adminTab === 'analytics' && <AnalyticsDashboard />}
+        {isAdmin && adminTab === 'usage' && <UsageMonitor />}
 
         {showRequesterView && (
           <>
             {reportSuccess && (
               <div className="p-3 bg-[#E6F4ED] text-[#146B44] text-xs rounded-xl flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 shrink-0" />
-
                 <span>
-                  تم استلام ملاحظتك بسرية تامة وسيتم مراجعتها
-                  من قبل المشرفين.
+                  تم استلام ملاحظتك بسرية تامة وسيتم مراجعتها من قبل المشرفين.
                 </span>
               </div>
             )}
 
             {activeRequesterTrip ? (
               <div className="bg-white p-6 rounded-2xl border border-[#8A949E]/20 text-center space-y-4">
-                {activeRequesterTrip.status ===
-                'pending' ? (
+                {activeRequesterTrip.status === 'pending' ? (
                   <>
                     <div className="w-16 h-16 mx-auto bg-[#FBEFDC] rounded-full flex items-center justify-center">
                       <Clock className="w-8 h-8 text-[#8F5A0A] animate-pulse" />
@@ -1980,38 +1481,27 @@ export const App: React.FC = () => {
                     </h3>
 
                     <p className="text-xs text-[#6B7280]">
-                      طلبك معروض للمتطوعين الموجودين ضمن
-                      النطاق الجغرافي المحدد
+                      طلبك معروض للمتطوعين الموجودين ضمن النطاق الجغرافي المحدد
                     </p>
 
                     <div className="p-3 bg-[#F7F8F9] rounded-xl text-xs text-right space-y-2">
                       <div>
                         <strong>من:</strong>{' '}
-                        {
-                          activeRequesterTrip.origin_area_label
-                        }
+                        {activeRequesterTrip.origin_area_label}
                       </div>
-
                       <div>
                         <strong>إلى:</strong>{' '}
-                        {
-                          activeRequesterTrip.destination_area_label
-                        }
+                        {activeRequesterTrip.destination_area_label}
                       </div>
-
                       <div>
                         <strong>الموعد:</strong>{' '}
-                        {formatScheduledAt(
-                          activeRequesterTrip.scheduled_at,
-                        )}
+                        {formatScheduledAt(activeRequesterTrip.scheduled_at)}
                       </div>
                     </div>
 
                     <button
                       onClick={() =>
-                        void handleCancelTrip(
-                          activeRequesterTrip.id,
-                        )
+                        void handleCancelTrip(activeRequesterTrip.id)
                       }
                       className="w-full h-[48px] bg-[#FCEAEA] text-[#B53A3A] font-semibold rounded-xl text-sm hover:bg-[#B53A3A] hover:text-white transition-colors"
                     >
@@ -2034,9 +1524,7 @@ export const App: React.FC = () => {
 
                     <div className="p-3 bg-[#F7F8F9] rounded-xl text-xs text-right">
                       <strong>الموعد:</strong>{' '}
-                      {formatScheduledAt(
-                        activeRequesterTrip.scheduled_at,
-                      )}
+                      {formatScheduledAt(activeRequesterTrip.scheduled_at)}
                     </div>
 
                     {volunteerContactData && (
@@ -2047,7 +1535,9 @@ export const App: React.FC = () => {
                           </span>
                           <span className="text-[11px] text-[#146B44] font-semibold">
                             {formatTimeSince(volunteerContactData.accepted_at) &&
-                              `قبل طلبك ${formatTimeSince(volunteerContactData.accepted_at)}`}
+                              `قبل طلبك ${formatTimeSince(
+                                volunteerContactData.accepted_at,
+                              )}`}
                           </span>
                         </div>
 
@@ -2056,7 +1546,11 @@ export const App: React.FC = () => {
                             <div className="text-xs text-[#146B44] font-semibold flex items-center gap-1 bg-white/70 p-2 rounded-lg border border-[#146B44]/10">
                               <LocateFixed className="w-3.5 h-3.5" />
                               <span>المسافة بينك وبين المتطوع:</span>
-                              <span>{formatDistance(volunteerContactData.distance_km)}</span>
+                              <span>
+                                {formatDistance(
+                                  volunteerContactData.distance_km,
+                                )}
+                              </span>
                             </div>
                           )}
 
@@ -2086,9 +1580,7 @@ export const App: React.FC = () => {
 
                     <button
                       onClick={() =>
-                        void handleCompleteTrip(
-                          activeRequesterTrip.id,
-                        )
+                        void handleCompleteTrip(activeRequesterTrip.id)
                       }
                       className="w-full h-[52px] bg-[#146B44] text-white font-semibold rounded-xl text-base"
                     >
@@ -2096,11 +1588,7 @@ export const App: React.FC = () => {
                     </button>
 
                     <button
-                      onClick={() =>
-                        setReportModalOpen(
-                          true,
-                        )
-                      }
+                      onClick={() => setReportModalOpen(true)}
                       className="text-xs text-[#6B7280] hover:text-[#B53A3A] flex items-center justify-center gap-1 mx-auto mt-2"
                     >
                       <AlertTriangle className="w-3.5 h-3.5" />
@@ -2118,28 +1606,21 @@ export const App: React.FC = () => {
                 {errorMessage && (
                   <div className="p-3 bg-[#FCEAEA] text-[#B53A3A] text-xs rounded-xl flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 shrink-0" />
-
-                    <span>
-                      {errorMessage}
-                    </span>
+                    <span>{errorMessage}</span>
                   </div>
                 )}
 
                 <LocationPicker
                   label="هتتحرك منين؟"
                   placeholder="ابحث عن منطقتك أو حيك"
-                  onSelect={(val) =>
-                    setOrigin(val)
-                  }
+                  onSelect={(val) => setOrigin(val)}
                   allowCurrentLocation
                 />
 
                 <LocationPicker
                   label="هتروح فين؟"
                   placeholder="اسم المستشفى أو المركز الطبي"
-                  onSelect={(val) =>
-                    setDest(val)
-                  }
+                  onSelect={(val) => setDest(val)}
                 />
 
                 <div>
@@ -2150,18 +1631,10 @@ export const App: React.FC = () => {
                   <input
                     type="datetime-local"
                     required
-                    min={
-                      dateTimeLimits.min
-                    }
-                    max={
-                      dateTimeLimits.max
-                    }
+                    min={dateTimeLimits.min}
+                    max={dateTimeLimits.max}
                     value={scheduledAt}
-                    onChange={(e) =>
-                      setScheduledAt(
-                        e.target.value,
-                      )
-                    }
+                    onChange={(e) => setScheduledAt(e.target.value)}
                     className="w-full h-[52px] px-4 bg-white border border-[#8A949E] rounded-xl text-base text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
                   />
 
@@ -2177,43 +1650,25 @@ export const App: React.FC = () => {
 
                   <div className="grid grid-cols-3 gap-2">
                     {[
-                      {
-                        id: 'patient',
-                        label: 'أنا',
-                      },
-                      {
-                        id: 'guardian',
-                        label: 'شخص تحت رعايتي',
-                      },
-                      {
-                        id: 'companion',
-                        label: 'مرافقة شخص',
-                      },
-                    ].map(
-                      (item) => (
-                        <button
-                          key={
-                            item.id
-                          }
-                          type="button"
-                          onClick={() =>
-                            setRelation(
-                              item.id as RequesterRelation,
-                            )
-                          }
-                          className={`h-10 text-xs font-semibold rounded-lg border transition-colors ${
-                            relation ===
-                            item.id
-                              ? 'border-[#146B44] bg-[#E6F4ED] text-[#146B44]'
-                              : 'border-[#8A949E] bg-white text-[#1F2430]'
-                          }`}
-                        >
-                          {
-                            item.label
-                          }
-                        </button>
-                      ),
-                    )}
+                      { id: 'patient', label: 'أنا' },
+                      { id: 'guardian', label: 'شخص تحت رعايتي' },
+                      { id: 'companion', label: 'مرافقة شخص' },
+                    ].map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() =>
+                          setRelation(item.id as RequesterRelation)
+                        }
+                        className={`h-10 text-xs font-semibold rounded-lg border transition-colors ${
+                          relation === item.id
+                            ? 'border-[#146B44] bg-[#E6F4ED] text-[#146B44]'
+                            : 'border-[#8A949E] bg-white text-[#1F2430]'
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
@@ -2221,21 +1676,13 @@ export const App: React.FC = () => {
                   <label className="flex items-start gap-2 cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={
-                        ackChecked
-                      }
-                      onChange={(e) =>
-                        setAckChecked(
-                          e.target.checked,
-                        )
-                      }
+                      checked={ackChecked}
+                      onChange={(e) => setAckChecked(e.target.checked)}
                       className="mt-1 accent-[#146B44] w-4 h-4"
                     />
-
                     <span className="text-xs text-[#1F2430] leading-relaxed">
-                      أقر بأن هذا الطلب لحالة علاجية حقيقية،
-                      وأتحمل المسؤولية الكاملة عن دقة البيانات
-                      المُدخلة.
+                      أقر بأن هذا الطلب لحالة علاجية حقيقية، وأتحمل المسؤولية
+                      الكاملة عن دقة البيانات المُدخلة.
                     </span>
                   </label>
                 </div>
@@ -2248,9 +1695,7 @@ export const App: React.FC = () => {
                     !ackChecked ||
                     createTripLoading
                   }
-                  onClick={() =>
-                    void handleCreateTrip()
-                  }
+                  onClick={() => void handleCreateTrip()}
                   className="w-full h-[52px] bg-[#146B44] disabled:opacity-40 active:bg-[#0F5636] text-white font-semibold rounded-xl text-base transition-colors flex items-center justify-center gap-2"
                 >
                   {createTripLoading ? (
@@ -2268,11 +1713,7 @@ export const App: React.FC = () => {
           <>
             {raceConditionDetected && (
               <RaceConditionToast
-                onClose={() =>
-                  setRaceConditionDetected(
-                    false,
-                  )
-                }
+                onClose={() => setRaceConditionDetected(false)}
               />
             )}
 
@@ -2282,29 +1723,20 @@ export const App: React.FC = () => {
                   <span className="text-xs bg-[#E6F4ED] text-[#146B44] px-3 py-1 rounded-full font-semibold">
                     تم قبول المشوار بنجاح
                   </span>
-
                   <ShieldCheck className="w-5 h-5 text-[#146B44]" />
                 </div>
 
                 <div>
                   <h3 className="text-xl font-bold text-[#1F2430]">
-                    {
-                      activeVolunteerTripData.requester_first_name
-                    }
+                    {activeVolunteerTripData.requester_first_name}
                   </h3>
-
                   <p className="text-xs text-[#6B7280]">
                     {activeVolunteerTripData.requester_relation ===
-                      'patient' &&
-                      'مريض'}
-
+                      'patient' && 'مريض'}
                     {activeVolunteerTripData.requester_relation ===
-                      'guardian' &&
-                      'ولي أمر'}
-
+                      'guardian' && 'ولي أمر'}
                     {activeVolunteerTripData.requester_relation ===
-                      'companion' &&
-                      'مرافق'}
+                      'companion' && 'مرافق'}
                   </p>
                 </div>
 
@@ -2316,48 +1748,36 @@ export const App: React.FC = () => {
                     )}
                   </div>
 
-                  {activeVolunteerTripData.patient_age !==
-                    undefined &&
-                    activeVolunteerTripData.patient_age !==
-                      null && (
+                  {activeVolunteerTripData.patient_age !== undefined &&
+                    activeVolunteerTripData.patient_age !== null && (
                       <div>
                         <strong>عمر المريض:</strong>{' '}
-                        {
-                          activeVolunteerTripData.patient_age
-                        } سنة
+                        {activeVolunteerTripData.patient_age} سنة
                       </div>
                     )}
 
                   {activeVolunteerTripData.patient_condition && (
                     <div>
                       <strong>الحالة:</strong>{' '}
-                      {
-                        activeVolunteerTripData.patient_condition
-                      }
+                      {activeVolunteerTripData.patient_condition}
                     </div>
                   )}
 
                   <div>
                     <strong>نقطة الانطلاق:</strong>{' '}
-                    {
-                      activeVolunteerTripData.origin_address
-                    }
+                    {activeVolunteerTripData.origin_address}
                   </div>
 
                   <div>
                     <strong>الوجهة:</strong>{' '}
-                    {
-                      activeVolunteerTripData.destination_address
-                    }
+                    {activeVolunteerTripData.destination_address}
                   </div>
 
                   {formatDistance(
                     activeVolunteerTripData.distance_km,
                   ) && (
                     <div>
-                      <strong>
-                        المسافة من موقعك وقت القبول:
-                      </strong>{' '}
+                      <strong>المسافة من موقعك وقت القبول:</strong>{' '}
                       {formatDistance(
                         activeVolunteerTripData.distance_km,
                       )}
@@ -2399,9 +1819,7 @@ export const App: React.FC = () => {
 
                 <button
                   onClick={() =>
-                    void handleCompleteTrip(
-                      activeVolunteerTripData.trip_id,
-                    )
+                    void handleCompleteTrip(activeVolunteerTripData.trip_id)
                   }
                   className="w-full h-[52px] bg-[#146B44] text-white font-semibold rounded-xl text-base active:bg-[#0F5636] transition-colors"
                 >
@@ -2409,11 +1827,7 @@ export const App: React.FC = () => {
                 </button>
 
                 <button
-                  onClick={() =>
-                    setReportModalOpen(
-                      true,
-                    )
-                  }
+                  onClick={() => setReportModalOpen(true)}
                   className="text-xs text-[#6B7280] hover:text-[#B53A3A] flex items-center justify-center gap-1 mx-auto"
                 >
                   <AlertTriangle className="w-3.5 h-3.5" />
@@ -2428,7 +1842,6 @@ export const App: React.FC = () => {
                       <h2 className="text-base font-bold text-[#1F2430]">
                         الطلبات المتاحة قربك
                       </h2>
-
                       <p className="text-[11px] text-[#6B7280] mt-1">
                         تظهر فقط الطلبات الموجودة ضمن 20 كم من موقعك.
                       </p>
@@ -2445,33 +1858,22 @@ export const App: React.FC = () => {
                         </span>
 
                         <button
-                          onClick={
-                            requestVolunteerLocation
-                          }
-                          disabled={
-                            locationLoading
-                          }
+                          onClick={requestVolunteerLocation}
+                          disabled={locationLoading}
                           className="text-[11px] text-[#146B44] font-semibold flex items-center gap-1"
                         >
                           <RefreshCw
                             className={`w-3.5 h-3.5 ${
-                              locationLoading
-                                ? 'animate-spin'
-                                : ''
+                              locationLoading ? 'animate-spin' : ''
                             }`}
                           />
-
                           تحديث
                         </button>
                       </div>
                     ) : (
                       <button
-                        onClick={
-                          requestVolunteerLocation
-                        }
-                        disabled={
-                          locationLoading
-                        }
+                        onClick={requestVolunteerLocation}
+                        disabled={locationLoading}
                         className="w-full h-11 bg-[#146B44] text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2"
                       >
                         {locationLoading ? (
@@ -2479,7 +1881,6 @@ export const App: React.FC = () => {
                         ) : (
                           <LocateFixed className="w-4 h-4" />
                         )}
-
                         تحديد موقعي وعرض الطلبات القريبة
                       </button>
                     )}
@@ -2488,10 +1889,7 @@ export const App: React.FC = () => {
                   {locationError && (
                     <div className="p-3 bg-[#FCEAEA] text-[#B53A3A] text-xs rounded-xl flex gap-2">
                       <AlertCircle className="w-4 h-4 shrink-0" />
-
-                      <span>
-                        {locationError}
-                      </span>
+                      <span>{locationError}</span>
                     </div>
                   )}
 
@@ -2505,19 +1903,13 @@ export const App: React.FC = () => {
                   {errorMessage && (
                     <div className="p-3 bg-[#FCEAEA] text-[#B53A3A] text-xs rounded-xl flex items-center gap-2">
                       <AlertCircle className="w-4 h-4 shrink-0" />
-
-                      <span>
-                        {errorMessage}
-                      </span>
+                      <span>{errorMessage}</span>
                     </div>
                   )}
                 </div>
 
                 <h2 className="text-base font-bold text-[#1F2430] flex items-center justify-between">
-                  <span>
-                    الطلبات المتاحة
-                  </span>
-
+                  <span>الطلبات المتاحة</span>
                   <span className="text-xs font-normal text-[#6B7280]">
                     ({pendingTrips.length})
                   </span>
@@ -2526,7 +1918,6 @@ export const App: React.FC = () => {
                 {loadingNearbyTrips ? (
                   <div className="bg-white p-8 rounded-2xl border border-[#8A949E]/20 text-center">
                     <Loader2 className="w-8 h-8 text-[#146B44] mx-auto animate-spin" />
-
                     <p className="text-xs text-[#6B7280] mt-3">
                       بنبحث عن الطلبات القريبة...
                     </p>
@@ -2534,11 +1925,9 @@ export const App: React.FC = () => {
                 ) : !volunteerLocation ? (
                   <div className="bg-white p-8 rounded-2xl border border-[#8A949E]/20 text-center space-y-2">
                     <LocateFixed className="w-8 h-8 text-[#8A949E] mx-auto" />
-
                     <p className="text-sm font-semibold text-[#1F2430]">
                       حدد موقعك أولًا
                     </p>
-
                     <p className="text-xs text-[#6B7280]">
                       لن يتم عرض الطلبات إلا بعد تحديد موقعك.
                     </p>
@@ -2546,86 +1935,44 @@ export const App: React.FC = () => {
                 ) : pendingTrips.length === 0 ? (
                   <div className="bg-white p-8 rounded-2xl border border-[#8A949E]/20 text-center space-y-2">
                     <Clock className="w-8 h-8 text-[#8A949E] mx-auto" />
-
                     <p className="text-sm font-semibold text-[#1F2430]">
                       مفيش طلبات قريبة منك دلوقتي
                     </p>
-
                     <p className="text-xs text-[#6B7280]">
                       هنظهر لك الطلبات الجديدة الموجودة ضمن 20 كم.
                     </p>
                   </div>
                 ) : (
-                  pendingTrips.map(
-                    (trip) => (
-                      <div
-                        key={
-                          trip.id
-                        }
-                        onClick={() =>
-                          setSelectedTripDetails(
-                            trip,
-                          )
-                        }
-                        className="bg-white p-4 rounded-2xl border border-[#8A949E]/20 shadow-sm cursor-pointer hover:border-[#146B44] transition-all space-y-2"
-                      >
-                        <div className="flex items-center justify-between text-xs text-[#6B7280]">
-                          <span className="bg-[#FBEFDC] text-[#8F5A0A] px-2 py-0.5 rounded-md font-medium">
-                            {trip.requester_relation ===
-                              'patient' &&
-                              'مريض'}
-
-                            {trip.requester_relation ===
-                              'guardian' &&
-                              'ولي أمر'}
-
-                            {trip.requester_relation ===
-                              'companion' &&
-                              'مرافق'}
-                          </span>
-
-                          <span>
-                            {formatScheduledAt(
-                              trip.scheduled_at,
-                            )}
-                          </span>
-                        </div>
-
-                        <div className="text-sm font-bold text-[#1F2430] flex items-center gap-2">
-                          <MapPin className="w-4 h-4 text-[#146B44] shrink-0" />
-
-                          <span>
-                            {
-                              trip.origin_area_label
-                            }
-                          </span>
-
-                          <span className="text-[#6B7280]">
-                            ⟶
-                          </span>
-
-                          <span>
-                            {
-                              trip.destination_area_label
-                            }
-                          </span>
-                        </div>
-
-                        {formatDistance(
-                          trip.distance_km,
-                        ) && (
-                          <div className="text-xs text-[#146B44] font-semibold flex items-center gap-1">
-                            <LocateFixed className="w-3.5 h-3.5" />
-
-                            {formatDistance(
-                              trip.distance_km,
-                            )}{' '}
-                            منك
-                          </div>
-                        )}
+                  pendingTrips.map((trip) => (
+                    <div
+                      key={trip.id}
+                      onClick={() => setSelectedTripDetails(trip)}
+                      className="bg-white p-4 rounded-2xl border border-[#8A949E]/20 shadow-sm cursor-pointer hover:border-[#146B44] transition-all space-y-2"
+                    >
+                      <div className="flex items-center justify-between text-xs text-[#6B7280]">
+                        <span className="bg-[#FBEFDC] text-[#8F5A0A] px-2 py-0.5 rounded-md font-medium">
+                          {trip.requester_relation === 'patient' && 'مريض'}
+                          {trip.requester_relation === 'guardian' && 'ولي أمر'}
+                          {trip.requester_relation === 'companion' && 'مرافق'}
+                        </span>
+                        <span>{formatScheduledAt(trip.scheduled_at)}</span>
                       </div>
-                    ),
-                  )
+
+                      <div className="text-sm font-bold text-[#1F2430] flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-[#146B44] shrink-0" />
+                        <span>{trip.origin_area_label}</span>
+                        <span className="text-[#6B7280]">⟶</span>
+                        <span>{trip.destination_area_label}</span>
+                      </div>
+
+                      {formatDistance(trip.distance_km) && (
+                        <div className="text-xs text-[#146B44] font-semibold flex items-center gap-1">
+                          <LocateFixed className="w-3.5 h-3.5" />
+                          {formatDistance(trip.distance_km)} منك
+                        </div>
+                      )}
+                    </div>
+                  ))
                 )}
               </div>
             )}
@@ -2641,13 +1988,8 @@ export const App: React.FC = () => {
                     <h3 className="text-lg font-bold text-[#1F2430]">
                       تفاصيل المشوار
                     </h3>
-
                     <button
-                      onClick={() =>
-                        setSelectedTripDetails(
-                          null,
-                        )
-                      }
+                      onClick={() => setSelectedTripDetails(null)}
                       className="text-[#6B7280]"
                     >
                       <X className="w-6 h-6" />
@@ -2698,7 +2040,6 @@ export const App: React.FC = () => {
                 <h3 className="text-lg font-bold text-[#1F2430]">
                   تعديل بيانات الحساب
                 </h3>
-
                 <button
                   onClick={() => setShowSettings(false)}
                   className="text-[#6B7280] hover:text-[#1F2430]"
@@ -2761,7 +2102,7 @@ export const App: React.FC = () => {
                         max={120}
                         value={settingsPatientAge}
                         onChange={(e) => setSettingsPatientAge(e.target.value)}
-                        className="w-full h-11 px-3 bg-[#FFFFFF] border border-[#8A949E] rounded-xl text-sm text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
+                        className="w-full h-11 px-3 bg-white border border-[#8A949E] rounded-xl text-sm text-[#1F2430] focus:border-[#2F6FED] focus:outline-none"
                       />
                     </div>
 
@@ -2773,7 +2114,9 @@ export const App: React.FC = () => {
                         maxLength={500}
                         rows={3}
                         value={settingsPatientCondition}
-                        onChange={(e) => setSettingsPatientCondition(e.target.value)}
+                        onChange={(e) =>
+                          setSettingsPatientCondition(e.target.value)
+                        }
                         className="w-full p-3 bg-white border border-[#8A949E] rounded-xl text-sm text-[#1F2430] focus:border-[#2F6FED] focus:outline-none resize-none"
                       />
                     </div>
@@ -2782,7 +2125,9 @@ export const App: React.FC = () => {
 
                 <div className="pt-2 border-t border-[#8A949E]/20 space-y-2">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-[#1F2430]">الإشعارات الفورية</span>
+                    <span className="font-semibold text-[#1F2430]">
+                      الإشعارات الفورية
+                    </span>
                     <span className="text-[#6B7280]">
                       {pushEnabled ? 'مفعلة ✓' : 'غير مفعلة'}
                     </span>
