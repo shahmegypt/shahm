@@ -740,8 +740,7 @@ export const App: React.FC = () => {
             table: 'trips',
           },
           () => {
-            if (volunteerLocation) {
-              void loadNearbyTrips(volunteerLocation);
+            if (volunteerLocation) {void reportVolunteerLocation(volunteerLocation.lat, volunteerLocation.lng);
             }
           },
         )
