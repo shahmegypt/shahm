@@ -298,6 +298,7 @@ export const App: React.FC = () => {
     volunteer_first_name: string;
     volunteer_phone: string;
     accepted_at: string | null;
+    distance_km?: number | null;
   } | null>(null);
 
   const [showSettings, setShowSettings] = useState(false);
@@ -1015,10 +1016,8 @@ export const App: React.FC = () => {
       return;
     }
 
-    // 1. تحديث الـ State الرئيسي بالبيانات الجديدة
     setProfile(updatedProfile);
 
-    // 2. تحديث التخزين المحلي localStorage
     const pendingProfile = JSON.parse(
       localStorage.getItem('shahm.pendingProfile') || '{}',
     );
@@ -2051,6 +2050,15 @@ export const App: React.FC = () => {
                               `قبل طلبك ${formatTimeSince(volunteerContactData.accepted_at)}`}
                           </span>
                         </div>
+
+                        {volunteerContactData.distance_km !== undefined &&
+                          volunteerContactData.distance_km !== null && (
+                            <div className="text-xs text-[#146B44] font-semibold flex items-center gap-1 bg-white/70 p-2 rounded-lg border border-[#146B44]/10">
+                              <LocateFixed className="w-3.5 h-3.5" />
+                              <span>المسافة بينك وبين المتطوع:</span>
+                              <span>{formatDistance(volunteerContactData.distance_km)}</span>
+                            </div>
+                          )}
 
                         <div className="grid grid-cols-2 gap-2">
                           <a
